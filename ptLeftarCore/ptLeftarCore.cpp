@@ -5,7 +5,7 @@
 #include "Math/Ray.h"
 #include "Graphics/Triangle.h"
 #include "Math/Camera.h"
-#include "objloader.h"
+#include "../external/objloader.h"
 #include "Graphics/Octree.h"
 
 
