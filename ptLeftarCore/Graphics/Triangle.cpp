@@ -95,6 +95,7 @@ bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
   hitDescriptor.normal = (v1.normal * n0 + v2.normal * n1 + v3.normal * n2) / n;
   hitDescriptor.uv = (v1.uv * n0 + v2.uv * n1 + v3.uv * n2) / n;
   hitDescriptor.primitive = this;
+  hitDescriptor.materialId = materialId;
 
   return true;
 }

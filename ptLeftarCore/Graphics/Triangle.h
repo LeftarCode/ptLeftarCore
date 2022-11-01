@@ -9,6 +9,7 @@ class Triangle : public Primitive {
 public:
   unsigned char fixedColumn;
   Vertex v1, v2, v3;
+  int materialId;
   float denom;
 
 public:

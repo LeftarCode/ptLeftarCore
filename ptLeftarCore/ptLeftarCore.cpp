@@ -8,9 +8,11 @@
 #include "../external/objloader.h"
 #include "Graphics/Octree.h"
 #include <thread>
+#include "Graphics/Material.h"
 
 const int ThreadsCount = 16;
 Color *data = nullptr;
+std::vector<Material> materials;
 
 void render(int width, int height, Camera& camera, Octree& octree, int workerID) {
   int partialWidth = width / ThreadsCount;
@@ -22,6 +24,8 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
       if (octree.hit(r, hit)) {
         hit.normal.normalize();
 
+        Material currentMaterial = materials[hit.materialId];
+
         Vector3f lightDirection = Vector3f(0.0f, -1.0f, -1.0f);
         lightDirection.normalize();
         float intense = lightDirection.dotProduct(hit.normal);
@@ -31,9 +35,7 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
           intense = 1;
         }
 
-        data[j * width + i].r = fabs(hit.normal.x) * 255;
-        data[j * width + i].g = fabs(hit.normal.y) * 255;
-        data[j * width + i].b = fabs(hit.normal.z) * 255;
+        data[j * width + i] = currentMaterial.diffuseTexture->sample(hit.uv);
       }
     }
   }
@@ -48,7 +50,7 @@ int main() {
 
   AABB modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   objl::Loader Loader;
-  bool succes = Loader.LoadFile("sponza/sponza.obj");
+  bool succes = Loader.LoadFile("crytek-sponza-huge-vray-obj/crytek-sponza-huge-vray.obj");
   for (int i = 0; i < Loader.LoadedMeshes.size(); i++) {
     objl::Mesh curMesh = Loader.LoadedMeshes[i];
     std::vector<Vertex> vertices;
@@ -66,11 +68,22 @@ int main() {
       vertices.push_back(vertex);
     }
 
+    Material material;
+    material.diffuseColor.r = curMesh.MeshMaterial.Kd.X * 255;
+    material.diffuseColor.g = curMesh.MeshMaterial.Kd.Y * 255;
+    material.diffuseColor.b = curMesh.MeshMaterial.Kd.Z * 255;
+    if (curMesh.MeshMaterial.map_Kd.length() > 0) {
+      Texture *diffuse = new Texture();
+      diffuse->loadFromFile("crytek-sponza-huge-vray-obj\\" + curMesh.MeshMaterial.map_Kd);
+      material.diffuseTexture = diffuse;
+    }
+    materials.push_back(material);
     
 		for (int j = 0; j < curMesh.Indices.size(); j += 3) {
       Triangle triangle = Triangle(vertices[curMesh.Indices[j]],
                         vertices[curMesh.Indices[j + 1]],
                         vertices[curMesh.Indices[j + 2]]);
+      triangle.materialId = materials.size() - 1;
 
       modelAABB.extend(vertices[curMesh.Indices[j]].position);
       modelAABB.extend(vertices[curMesh.Indices[j + 1]].position);
@@ -81,9 +94,9 @@ int main() {
 
   Octree octree(triangles);
   //camera.lookAt(modelAABB.center);
-  Camera camera(modelAABB.center + Vector3f(0,0,-5), width, height,
+  Camera camera(modelAABB.center + Vector3f(0,-300,0), width, height,
                 45.0f);
-  camera.lookAt(camera.origin + Vector3f(1,0,0));
+  camera.lookAt(camera.origin + Vector3f(-1,0,0));
   std::vector<std::thread> threads;
   threads.reserve(ThreadsCount);
   for (int i = 0; i < ThreadsCount; i++) {

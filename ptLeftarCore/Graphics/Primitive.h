@@ -14,6 +14,7 @@ public:
   struct HitDescriptor {
     Vector3f position, normal, uv;
     Primitive *primitive = nullptr;
+    int materialId;
   };
 
   Primitive(PrimitiveType type);
