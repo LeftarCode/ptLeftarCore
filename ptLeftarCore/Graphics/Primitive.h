@@ -11,5 +11,5 @@ class Primitive {
 
 public:
   Primitive(PrimitiveType type);
-  virtual bool hit(Ray ray, Vector3f& barycentricCords) = 0;
+  virtual bool hit(const Ray& ray, Vector3f& normal) = 0;
 };

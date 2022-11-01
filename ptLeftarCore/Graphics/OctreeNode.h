@@ -11,5 +11,5 @@ public:
   OctreeNode(Vector3f topLeftFront, Vector3f bottomRightBack);
   void addTriangle(Triangle triangles);
   void subdivide(int depth);
-  bool hit(Ray ray, Vector3f &barycentricCords, Triangle& triangleHit);
+  bool hit(Ray ray, Vector3f& normal);
 };

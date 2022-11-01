@@ -1,4 +1,5 @@
 #include "Triangle.h"
+#include <algorithm>
 
 
 Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
@@ -10,15 +11,15 @@ Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
 }
 
 // TODO(LeftarCode): Implement fast RT intersection https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-bool Triangle::hit(Ray ray, Vector3f& barycentricCords) {
-
+bool Triangle::hit(const Ray &ray, Vector3f &outNormal) {
   if (fabs(normal.dotProduct(ray.direction) < 0.000001)) {
     return false;
   }
 
   float D = -normal.dotProduct(v1.position);
   float t =
-      -(normal.dotProduct(ray.origin) + D) / normal.dotProduct(ray.direction);
+      -(normal.dotProduct(ray.origin) + D) /
+      normal.dotProduct(ray.direction);
 
   if (t < 0) {
     return false;
@@ -50,7 +51,9 @@ bool Triangle::hit(Ray ray, Vector3f& barycentricCords) {
   }
 
   float w = 1 - u - v;
-  barycentricCords = Vector3f(u, v, w);
+  outNormal = Vector3f(v1.normal * u +
+                        v2.normal * v +
+                        v3.normal * w);
 
   return true;
 }

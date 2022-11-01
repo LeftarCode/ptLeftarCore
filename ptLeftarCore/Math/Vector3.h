@@ -21,11 +21,11 @@ public:
     z /= vectorLength;
   }
 
-  T dotProduct(Vector3<T> v1) { 
+  T dotProduct(const Vector3<T> &v1) const { 
     return (x * v1.x + y * v1.y + z * v1.z);
   }
 
-  Vector3<T> crossProduct(Vector3<T> v1) {
+  Vector3<T> crossProduct(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = y * v1.z - z * v1.y;
     result.y = -(x * v1.z - z * v1.x);
@@ -34,7 +34,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator+(Vector3<T> v1) {
+  Vector3<T> operator+(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = x + v1.x;
     result.y = y + v1.y;
@@ -43,7 +43,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator-(Vector3<T> v1) {
+  Vector3<T> operator-(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = x - v1.x;
     result.y = y - v1.y;
@@ -52,7 +52,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator*(Vector3<T> v1) {
+  Vector3<T> operator*(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = x * v1.x;
     result.y = y * v1.y;
@@ -61,7 +61,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator/(Vector3<T> v1) {
+  Vector3<T> operator/(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = x / v1.x;
     result.y = y / v1.y;
@@ -70,7 +70,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator+(T value) {
+  Vector3<T> operator+(T value) const {
     Vector3<T> result;
     result.x = x + value;
     result.y = y + value;
@@ -79,7 +79,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator-(T value) {
+  Vector3<T> operator-(T value) const {
     Vector3<T> result;
     result.x = x - value;
     result.y = y - value;
@@ -88,7 +88,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator*(T value) {
+  Vector3<T> operator*(T value) const {
     Vector3<T> result;
     result.x = x * value;
     result.y = y * value;
@@ -97,7 +97,7 @@ public:
     return result;
   }
 
-  Vector3<T> operator/(T value) {
+  Vector3<T> operator/(T value) const {
     Vector3<T> result;
     result.x = x / value;
     result.y = y / value;

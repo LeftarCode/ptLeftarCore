@@ -7,16 +7,23 @@
 #include "Math/Camera.h"
 #include "../external/objloader.h"
 #include "Graphics/Octree.h"
+#include <thread>
 
+Color *data = nullptr;
+
+
+void render(int width, int height, Camera& camera, Octree& octree, int workerID) {
+  int partialWidth = width / 8;
+}
 
 int main() {
   int width = 1920;
   int height = 1080;
-  Color *data = (Color *)malloc(sizeof(Color) * width * height);
+  data = (Color *)malloc(sizeof(Color) * width * height);
   memset(data, 0, sizeof(Color) * width * height);
 
   // Camera
-  Camera camera({0.0f, 0.0f, 5.0f}, width, height);
+  Camera camera({0.0f, 0.0f, 10.0f}, width, height);
 
   std::vector<Vertex> vertices;
   std::vector<Triangle> triangles;
@@ -29,7 +36,7 @@ int main() {
       Vertex vertex;
       vertex.position = Vector3f(curMesh.Vertices[j].Position.X,
                                  curMesh.Vertices[j].Position.Y,
-                                 curMesh.Vertices[j].Position.Z);
+                                 curMesh.Vertices[j].Position.Z+1);
       vertex.normal = Vector3f(curMesh.Vertices[j].Normal.X, curMesh.Vertices[j].Normal.Y,
                    curMesh.Vertices[j].Normal.Z);
 
@@ -53,16 +60,13 @@ int main() {
       Ray r = camera.castRay(i, j);
 
       Vector3f barycentricCoords;
-      Triangle triangle = Triangle(Vertex(), Vertex(), Vertex());
-      if (octree.hit(r, barycentricCoords, triangle)) {
-        Vector3f interNormal = triangle.v1.normal * barycentricCoords.x +
-                               triangle.v2.normal * barycentricCoords.y +
-                               triangle.v3.normal * barycentricCoords.z;
-        interNormal.normalize();
+      Vector3f normal;
+      if (octree.hit(r, normal)) {
+        normal.normalize();
 
         Vector3f lightDirection = Vector3f(0.0f, 0.0f, -1.0f);
         lightDirection.normalize();
-        float intense = lightDirection.dotProduct(interNormal);
+        float intense = lightDirection.dotProduct(normal);
         if (intense < 0) {
           intense = 0;
         } else if (intense > 1) {
@@ -75,8 +79,6 @@ int main() {
       }
     }
   }
-
-
 
   stbi_write_png("render.png", width, height, 3, data, 0);
 

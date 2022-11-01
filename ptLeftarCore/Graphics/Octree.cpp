@@ -42,6 +42,6 @@ Octree::Octree(std::vector<Triangle> scene) {
 
 }
 
-bool Octree::hit(Ray ray, Vector3f &barycentricCords, Triangle& triangle) { 
-  return rootNode->hit(ray, barycentricCords, triangle);
+bool Octree::hit(Ray ray, Vector3f& normal) { 
+  return rootNode->hit(ray, normal);
 }

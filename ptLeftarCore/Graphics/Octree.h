@@ -9,5 +9,5 @@ class Octree {
 
 public:
   Octree(std::vector<Triangle> scene);
-  bool hit(Ray ray, Vector3f &barycentricCords, Triangle& triangle);
+  bool hit(Ray ray, Vector3f& normal);
 };

@@ -94,10 +94,9 @@ void OctreeNode::subdivide(int depth) {
   }
 }
 
-bool OctreeNode::hit(Ray ray, Vector3f &barycentricCords, Triangle &triangleHit) {
+bool OctreeNode::hit(Ray ray, Vector3f& normal) {
   for (auto triangle : triangles) {
-    if (triangle.hit(ray, barycentricCords)) {
-      triangleHit = triangle;
+    if (triangle.hit(ray, normal)) {
       return true;
     }
   }
@@ -105,7 +104,7 @@ bool OctreeNode::hit(Ray ray, Vector3f &barycentricCords, Triangle &triangleHit)
   for (auto child : children) {
     AABB childAABB(child->topLeftFront, child->bottomRightBack);
     if (childAABB.intersect(ray)) {
-      if (child->hit(ray, barycentricCords, triangleHit)) {
+      if (child->hit(ray, normal)) {
         return true;
       }
     }
