@@ -1,4 +1,5 @@
 #include "OctreeNode.h"
+#include <algorithm>
 
 #define TopLeftFront 0
 #define TopRightFront 1
@@ -9,6 +10,9 @@
 #define BottomRightBack 6
 #define BottomLeftBack 7
 
+OctreeNode::OctreeNode()
+    : topLeftFront(Vector3f()), bottomRightBack(Vector3f()) {}
+
 OctreeNode::OctreeNode(Vector3f topLeftFront, Vector3f bottomRightBack)
     : topLeftFront(topLeftFront), bottomRightBack(bottomRightBack) {
 }
@@ -17,8 +21,8 @@ void OctreeNode::addTriangle(Triangle triangle) {
   triangles.push_back(triangle);
 }
 
-void OctreeNode::subdivide(int depth) { 
-  if (depth == 0 || triangles.size() < 16) {
+void OctreeNode::subdivide() { 
+  if (triangles.size() < 16) {
     return;
   }
 
@@ -66,8 +70,6 @@ void OctreeNode::subdivide(int depth) {
     children.push_back(new OctreeNode(newNode.topLeftFront, newNode.bottomRightBack));
   }
 
-  AABB test = AABB(topLeftFront, bottomRightBack);
-
   std::vector<Triangle> remainingTriangles;
   for (auto triangle : triangles) {
     AABB triangleAABB = triangle.getBoundingBox();
@@ -90,25 +92,92 @@ void OctreeNode::subdivide(int depth) {
   remainingTriangles.swap(triangles);
 
   for (auto child : children) {
-    child->subdivide(depth - 1);
+    child->subdivide();
   }
 }
 
-bool OctreeNode::hit(Ray ray, Vector3f& normal) {
+bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
+  //for (auto triangle : triangles) {
+  //  if (triangle.hit(ray, hitDescriptor)) {
+  //    return true;
+  //  }
+  //}
+
+  //for (auto child : children) {
+  //  AABB childAABB(child->topLeftFront, child->bottomRightBack);
+  //  float distance = 0;
+  //  if (childAABB.intersect(ray, distance)) {
+  //    if (child->hit(ray, hitDescriptor)) {
+  //      return true;
+  //    }
+  //  }
+  //}
+
+  //return false;
+  Primitive::HitDescriptor nearestHit;
+  float nearestDistance = std::numeric_limits<float>::max();
+
   for (auto triangle : triangles) {
-    if (triangle.hit(ray, normal)) {
-      return true;
+    Primitive::HitDescriptor tempHit;
+    float interestionDistance;
+    if (!triangle.hit(ray, tempHit)) {
+      continue;
     }
+
+    interestionDistance = ray.origin.distance(tempHit.position);
+    if (nearestHit.primitive != nullptr &&
+        interestionDistance > nearestDistance) {
+      continue;
+    }
+
+    nearestHit = tempHit;
+    nearestDistance = interestionDistance;
   }
+
+  using node_distance = std::pair<OctreeNode*, float>;
+  std::vector<node_distance> considered_children;
+  considered_children.reserve(children.size());
 
   for (auto child : children) {
+    float distance = std::numeric_limits<float>::max();
     AABB childAABB(child->topLeftFront, child->bottomRightBack);
-    if (childAABB.intersect(ray)) {
-      if (child->hit(ray, normal)) {
-        return true;
-      }
+
+    if (!childAABB.intersect(ray, distance)) {
+      continue;
     }
+    considered_children.emplace_back(child, distance);
   }
 
-  return false;
+  std::sort(considered_children.begin(), considered_children.end(),
+            [](const node_distance &a, const node_distance &b) {
+              return a.second < b.second;
+            });
+
+  for (const auto [n_ptr, dist] : considered_children) {
+    const OctreeNode &n = *n_ptr;
+
+    Vector3f intersectionPoint;
+    float interestionDistance;
+
+    Primitive::HitDescriptor tempHit;
+    if (!n.hit(ray, tempHit)) {
+      continue;
+    }
+
+    interestionDistance = ray.origin.distance(tempHit.position);
+    if (nearestHit.primitive != nullptr && interestionDistance > nearestDistance) {
+      continue;
+    }
+
+    nearestHit = tempHit;
+    nearestDistance = dist;
+    break;
+  }
+
+  if (nearestHit.primitive == nullptr) {
+    return false;
+  }
+
+  hitDescriptor = nearestHit;
+  return true;
 }

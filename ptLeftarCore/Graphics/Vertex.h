@@ -5,4 +5,5 @@ class Vertex {
 public:
   Vector3f position;
   Vector3f normal;
+  Vector3f uv;
 };

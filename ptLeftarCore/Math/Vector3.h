@@ -25,6 +25,13 @@ public:
     return (x * v1.x + y * v1.y + z * v1.z);
   }
 
+  float distance(const Vector3<T> &v1) const {
+    const T dx = x - v1.x;
+    const T dy = y - v1.y;
+    const T dz = z - v1.z;
+    return sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
   Vector3<T> crossProduct(const Vector3<T>& v1) const {
     Vector3<T> result;
     result.x = y * v1.z - z * v1.y;

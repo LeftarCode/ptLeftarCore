@@ -9,7 +9,13 @@ enum PrimitiveType {
 class Primitive {
   PrimitiveType type;
 
+
 public:
+  struct HitDescriptor {
+    Vector3f position, normal, uv;
+    Primitive *primitive = nullptr;
+  };
+
   Primitive(PrimitiveType type);
-  virtual bool hit(const Ray& ray, Vector3f& normal) = 0;
+  virtual bool hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) = 0;
 };

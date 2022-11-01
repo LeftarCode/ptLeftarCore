@@ -4,10 +4,8 @@
 
 class Octree {
   OctreeNode *rootNode;
-  Vector3f topLeftFront, bottomRightBack;
-  int depth = 8;
 
 public:
   Octree(std::vector<Triangle> scene);
-  bool hit(Ray ray, Vector3f& normal);
+  bool hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) const;
 };
