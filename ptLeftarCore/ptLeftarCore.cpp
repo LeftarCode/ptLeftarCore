@@ -31,24 +31,24 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
           intense = 1;
         }
 
-        data[j * width + i].r = fabs(hit.uv.x) * 255;
-        data[j * width + i].g = fabs(hit.uv.y) * 255;
-        data[j * width + i].b = fabs(hit.uv.z) * 255;
+        data[j * width + i].r = fabs(hit.normal.x) * 255;
+        data[j * width + i].g = fabs(hit.normal.y) * 255;
+        data[j * width + i].b = fabs(hit.normal.z) * 255;
       }
     }
   }
 }
 
 int main() {
-  int width = 1280;
-  int height = 640;
+  int width = 400;
+  int height = 400;
   data = (Color *)malloc(sizeof(Color) * width * height);
   memset(data, 0, sizeof(Color) * width * height);
   std::vector<Triangle> triangles;
 
   AABB modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   objl::Loader Loader;
-  bool succes = Loader.LoadFile("A001.obj");
+  bool succes = Loader.LoadFile("sponza/sponza.obj");
   for (int i = 0; i < Loader.LoadedMeshes.size(); i++) {
     objl::Mesh curMesh = Loader.LoadedMeshes[i];
     std::vector<Vertex> vertices;
