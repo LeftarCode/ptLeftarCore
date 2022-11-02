@@ -1,5 +1,17 @@
 #pragma once
 #include "./Vector3.h"
+#include <immintrin.h>
+#include <limits>
+
+struct PackedRay {
+  __m256 m_origin[3];
+  __m256 m_direction[3];
+};
+
+struct PackedIntersectionResult {
+  float t = std::numeric_limits<float>::max();
+  int idx;
+};
 
 class Ray {
 public:

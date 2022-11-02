@@ -11,104 +11,11 @@
 #include "Graphics/Material.h"
 #include <array>
 
-struct PackedRay {
-  __m256 m_origin[3];
-  __m256 m_direction[3];
-};
-
-struct PackedIntersectionResult {
-  float t = std::numeric_limits<float>::max();
-  int idx;
-};
-
-struct PackedTriangles {
-  __m256 e1[3];
-  __m256 e2[3];
-  __m256 v1[3];
-  std::array<int, 8> trianglesIds;
-};
-
 const int ThreadsCount = 16;
 Color *data = nullptr;
 std::vector<Material> materials;
 std::vector<Triangle> triangles;
 std::vector<PackedTriangles> packedTriangles;
-
-
-void avx_multi_cross(__m256 result[3], const __m256 a[3], const __m256 b[3]) {
-  result[0] = _mm256_fmsub_ps(a[1], b[2], _mm256_mul_ps(b[1], a[2]));
-  result[1] = _mm256_fmsub_ps(a[2], b[0], _mm256_mul_ps(b[2], a[0]));
-  result[2] = _mm256_fmsub_ps(a[0], b[1], _mm256_mul_ps(b[0], a[1]));
-}
-
-__m256 avx_multi_dot(const __m256 a[3], const __m256 b[3]) {
-  return _mm256_fmadd_ps(a[2], b[2], _mm256_fmadd_ps(a[1], b[1], _mm256_mul_ps(a[0], b[0])));
-}
-
-void avx_multi_sub(__m256 result[3], const __m256 a[3], const __m256 b[3]) {
-  result[0] = _mm256_sub_ps(a[0], b[0]);
-  result[1] = _mm256_sub_ps(a[1], b[1]);
-  result[2] = _mm256_sub_ps(a[2], b[2]);
-}
-
-const __m256 oneM256 = _mm256_set1_ps(1.0f);
-const __m256 minusOneM256 = _mm256_set1_ps(-1.0f);
-const __m256 positiveEpsilonM256 = _mm256_set1_ps(1e-6f);
-const __m256 negativeEpsilonM256 = _mm256_set1_ps(-1e-6f);
-const __m256 zeroM256 = _mm256_set1_ps(0.0f);
-
-bool avx_intersection(const PackedTriangles &packedTris,
-                      const PackedRay packedRays,
-                      PackedIntersectionResult &result) {
-
-  __m256 q[3];
-  avx_multi_cross(q, packedRays.m_direction, packedTris.e2);
-
-  __m256 a = avx_multi_dot(packedTris.e1, q);
-  __m256 f = _mm256_div_ps(oneM256, a);
-
-  __m256 s[3];
-  avx_multi_sub(s, packedRays.m_origin, packedTris.v1);
-
-  __m256 u = _mm256_mul_ps(f, avx_multi_dot(s, q));
-
-  __m256 r[3];
-  avx_multi_cross(r, s, packedTris.e1);
-
-  __m256 v = _mm256_mul_ps(f, avx_multi_dot(packedRays.m_direction, r));
-  __m256 t = _mm256_mul_ps(f, avx_multi_dot(packedTris.e2, r));
-
-  // Failure conditions
-  __m256 failed =
-      _mm256_and_ps(_mm256_cmp_ps(a, negativeEpsilonM256, _CMP_GT_OQ),
-                    _mm256_cmp_ps(a, positiveEpsilonM256, _CMP_LT_OQ));
-
-  failed = _mm256_or_ps(failed, _mm256_cmp_ps(u, zeroM256, _CMP_LT_OQ));
-  failed = _mm256_or_ps(failed, _mm256_cmp_ps(v, zeroM256, _CMP_LT_OQ));
-  failed = _mm256_or_ps(
-      failed, _mm256_cmp_ps(_mm256_add_ps(u, v), oneM256, _CMP_GT_OQ));
-  failed = _mm256_or_ps(failed, _mm256_cmp_ps(t, zeroM256, _CMP_LT_OQ));
-
-  __m256 tResults = _mm256_blendv_ps(t, minusOneM256, failed);
-
-  int mask = _mm256_movemask_ps(tResults);
-  if (mask != 0xFF) {
-    // There is at least one intersection
-    result.idx = -1;
-
-    float *ptr = (float *)&tResults;
-    for (int i = 0; i < 8; ++i) {
-      if (ptr[i] >= 0.0f && ptr[i] < result.t) {
-        result.t = ptr[i];
-        result.idx = i;
-      }
-    }
-
-    return result.idx != -1;
-  }
-
-  return false;
-}
 
 void render(int width, int height, Camera& camera, Octree& octree, int workerID) {
   int partialWidth = width / ThreadsCount;
@@ -131,17 +38,11 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
       float closestDistance = std::numeric_limits<float>::max();
       for (auto pack : packedTriangles) {
         PackedIntersectionResult result;
-        if (avx_intersection(pack, packedRay, result)) {
-          int triangleIdxInPackage = result.idx;
-          Triangle hitTriangle =
-              triangles[pack.trianglesIds[triangleIdxInPackage]];
-          Vector3f point = r.origin + r.direction * result.t; 
+        Primitive::HitDescriptor hitDesc;
+        if (pack.avx_intersection(packedRay, result, hitDesc)) {
+          int idx = result.idx;
 
-          Primitive::HitDescriptor hitDesc =
-              hitTriangle.getHitDescriptorFromPoint(point);
-          hitDesc.normal.normalize();
-
-          float distance = point.distance(r.origin);
+          float distance = hitDesc.position.distance(r.origin);
           if (distance < closestDistance) {
             closestDistance = distance;
             closestHit = hitDesc;
@@ -161,34 +62,13 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
       data[j * width + i].r = 255 * intense;
       data[j * width + i].g = 255 * intense;
       data[j * width + i].b = 255 * intense;
-
-      /*for (Triangle triangle : triangles) {
-        if (triangle.hit(r, hit)) {
-          hit.normal.normalize();
-
-          Material currentMaterial = materials[hit.materialId];
-
-          Vector3f lightDirection = Vector3f(0.0f, -1.0f, -1.0f);
-          lightDirection.normalize();
-          float intense = lightDirection.dotProduct(hit.normal);
-          if (intense < 0) {
-            intense = 0;
-          } else if (intense > 1) {
-            intense = 1;
-          }
-
-          data[j * width + i].r = 255 * intense;
-          data[j * width + i].g = 255 * intense;
-          data[j * width + i].b = 255 * intense;
-        }
-      }*/
     }
   }
 }
 
 int main() {
-  int width = 640;
-  int height = 640;
+  int width = 160;
+  int height = 160;
   data = (Color *)malloc(sizeof(Color) * width * height);
   memset(data, 0, sizeof(Color) * width * height);
 
@@ -259,7 +139,7 @@ int main() {
       packed.v1[X].m256_f32[j] = v1.x;
       packed.v1[Y].m256_f32[j] = v1.y;
       packed.v1[Z].m256_f32[j] = v1.z;
-      packed.trianglesIds[j] = (i + j) % trianglesCount;
+      packed.triangles[j] = &triangles[(i + j) % trianglesCount];
     }
     packedTriangles.push_back(packed);
   }

@@ -14,11 +14,8 @@ static float AreaOfTriangle(float a, float b, float c) {
 
 Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
     : Primitive(PrimitiveType::eTriangle), v1(v1), v2(v2), v3(v3) {
-  Vector3f v0v1 = v2.position - v1.position;
-  Vector3f v0v2 = v3.position - v1.position;
-  normal = v0v1.crossProduct(v0v2);
-  normal.normalize();
-  denom = normal.dotProduct(normal);
+  Vector3f e1 = v2.position - v1.position;
+  Vector3f e2 = v3.position - v1.position;
 }
 
 bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
