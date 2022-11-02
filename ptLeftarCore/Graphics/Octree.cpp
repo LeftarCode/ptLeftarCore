@@ -1,7 +1,7 @@
 #include "Octree.h"
 #include <limits>
 
-Octree::Octree(std::vector<Triangle> scene) {
+Octree::Octree(std::vector<Triangle>& scene) {
   AABB aabb = AABB();
   for (auto triangle : scene) {
     aabb.extend(triangle.v1.position);

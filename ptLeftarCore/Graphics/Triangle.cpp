@@ -18,6 +18,10 @@ Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
   Vector3f e2 = v3.position - v1.position;
 }
 
+Triangle::Triangle()
+    : Primitive(PrimitiveType::eTriangle) {
+}
+
 bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
   AABB aabb = getBoundingBox();
   Vector3f dirfrac = ray.invDirection;

@@ -23,6 +23,33 @@ void OctreeNode::addTriangle(Triangle triangle) {
 
 void OctreeNode::subdivide() { 
   if (triangles.size() < 16) {
+    int trianglesCount = triangles.size();
+    if (trianglesCount > 0) {
+      int packsCount = (trianglesCount / 8) + 1;
+      for (int i = 0; i < packsCount; i++) {
+        PackedTriangles packed;
+        for (int j = 0; j < 8; j++) {
+          int trgIdx = (i * 8 + j) % trianglesCount;
+          Vector3f e1 =
+              triangles[trgIdx].v2.position - triangles[trgIdx].v1.position;
+          Vector3f e2 =
+              triangles[trgIdx].v3.position - triangles[trgIdx].v1.position;
+          Vector3f v1 = triangles[trgIdx].v1.position;
+
+          packed.e1[0].m256_f32[j] = e1.x;
+          packed.e1[1].m256_f32[j] = e1.y;
+          packed.e1[2].m256_f32[j] = e1.z;
+          packed.e2[0].m256_f32[j] = e2.x;
+          packed.e2[1].m256_f32[j] = e2.y;
+          packed.e2[2].m256_f32[j] = e2.z;
+          packed.v1[0].m256_f32[j] = v1.x;
+          packed.v1[1].m256_f32[j] = v1.y;
+          packed.v1[2].m256_f32[j] = v1.z;
+          packed.triangles[j] = &triangles[trgIdx];
+        }
+        packedTriangles.push_back(packed);
+      }
+    }
     return;
   }
 
@@ -91,47 +118,70 @@ void OctreeNode::subdivide() {
   triangles.clear();
   remainingTriangles.swap(triangles);
 
+  int trianglesCount = triangles.size();
+  if (trianglesCount > 0) {
+    int packsCount = (trianglesCount / 8) + 1;
+    for (int i = 0; i < packsCount; i++) {
+      PackedTriangles packed;
+      for (int j = 0; j < 8; j++) {
+        int trgIdx = (i * 8 + j) % trianglesCount;
+        Vector3f e1 =
+            triangles[trgIdx].v2.position - triangles[trgIdx].v1.position;
+        Vector3f e2 =
+            triangles[trgIdx].v3.position - triangles[trgIdx].v1.position;
+        Vector3f v1 = triangles[trgIdx].v1.position;
+
+        packed.e1[0].m256_f32[j] = e1.x;
+        packed.e1[1].m256_f32[j] = e1.y;
+        packed.e1[2].m256_f32[j] = e1.z;
+        packed.e2[0].m256_f32[j] = e2.x;
+        packed.e2[1].m256_f32[j] = e2.y;
+        packed.e2[2].m256_f32[j] = e2.z;
+        packed.v1[0].m256_f32[j] = v1.x;
+        packed.v1[1].m256_f32[j] = v1.y;
+        packed.v1[2].m256_f32[j] = v1.z;
+        packed.triangles[j] = &triangles[trgIdx];
+      }
+      packedTriangles.push_back(packed);
+    }
+  }
+
   for (auto child : children) {
     child->subdivide();
   }
 }
 
 bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
-  //for (auto triangle : triangles) {
-  //  if (triangle.hit(ray, hitDescriptor)) {
-  //    return true;
-  //  }
-  //}
-
-  //for (auto child : children) {
-  //  AABB childAABB(child->topLeftFront, child->bottomRightBack);
-  //  float distance = 0;
-  //  if (childAABB.intersect(ray, distance)) {
-  //    if (child->hit(ray, hitDescriptor)) {
-  //      return true;
-  //    }
-  //  }
-  //}
-
-  //return false;
   Primitive::HitDescriptor nearestHit;
   float nearestDistance = std::numeric_limits<float>::max();
 
-  for (auto triangle : triangles) {
+  PackedRay packedRay;
+  for (int k = 0; k < 8; k++) {
+    packedRay.direction[0].m256_f32[k] = ray.direction.x;
+    packedRay.direction[1].m256_f32[k] = ray.direction.y;
+    packedRay.direction[2].m256_f32[k] = ray.direction.z;
+
+    packedRay.origin[0].m256_f32[k] = ray.origin.x;
+    packedRay.origin[1].m256_f32[k] = ray.origin.y;
+    packedRay.origin[2].m256_f32[k] = ray.origin.z;
+  }
+
+  for (auto pack : packedTriangles) {
+    PackedIntersectionResult result;
     Primitive::HitDescriptor tempHit;
-    float interestionDistance;
-    if (!triangle.hit(ray, tempHit)) {
+    float intersectionDistance;
+    if (!pack.hit(packedRay, result, tempHit)) {
       continue;
     }
-
-    interestionDistance = ray.origin.distance(tempHit.position);
+    
+    intersectionDistance = ray.origin.distance(tempHit.position);
     if (nearestHit.primitive != nullptr &&
-        interestionDistance > nearestDistance) {
+        intersectionDistance > nearestDistance) {
       continue;
     }
 
     nearestHit = tempHit;
-    nearestDistance = interestionDistance;
+    nearestDistance = intersectionDistance;
   }
 
   using node_distance = std::pair<OctreeNode*, float>;

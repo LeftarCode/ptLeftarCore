@@ -5,6 +5,7 @@
 class OctreeNode {
   std::vector<OctreeNode*> children;
   std::vector<Triangle> triangles;
+  std::vector<PackedTriangles> packedTriangles;
   Vector3f topLeftFront, bottomRightBack;
 
 public:

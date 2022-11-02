@@ -4,8 +4,8 @@
 #include <limits>
 
 struct PackedRay {
-  __m256 m_origin[3];
-  __m256 m_direction[3];
+  __m256 origin[3];
+  __m256 direction[3];
 };
 
 struct PackedIntersectionResult {
