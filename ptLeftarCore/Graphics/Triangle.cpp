@@ -1,14 +1,10 @@
 #include "Triangle.h"
 #include <algorithm>
 
-
 static float AreaOfTriangle(float a, float b, float c) {
   float p = (a + b + c) / 2.0;
   float area_sqr = p * (p - a) * (p - b) * (p - c);
 
-  // It seems that due to floating point inaccuracies it's possible to get a
-  // negative result here when we are dealing with a triangle having all points
-  // on the same line (i.e. with a zero size area).
   if (area_sqr < 0.0) {
     return 0.0;
   }
@@ -98,6 +94,31 @@ bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
   hitDescriptor.materialId = materialId;
 
   return true;
+}
+
+Primitive::HitDescriptor Triangle::getHitDescriptorFromPoint(Vector3f point) {
+  float a = v1.position.distance(v2.position);
+  float b = v2.position.distance(v3.position);
+  float c = v3.position.distance(v1.position);
+
+  float p0 = point.distance(v1.position);
+  float p1 = point.distance(v2.position);
+  float p2 = point.distance(v3.position);
+
+  float n0 = AreaOfTriangle(b, p2, p1);
+  float n1 = AreaOfTriangle(c, p0, p2);
+  float n2 = AreaOfTriangle(a, p1, p0);
+
+  float n = n0 + n1 + n2;
+
+  Primitive::HitDescriptor hitDescriptor;
+  hitDescriptor.position = point;
+  hitDescriptor.normal = (v1.normal * n0 + v2.normal * n1 + v3.normal * n2) / n;
+  hitDescriptor.uv = (v1.uv * n0 + v2.uv * n1 + v3.uv * n2) / n;
+  hitDescriptor.primitive = this;
+  hitDescriptor.materialId = materialId;
+
+  return hitDescriptor;
 }
 
 AABB Triangle::getBoundingBox() const { 
