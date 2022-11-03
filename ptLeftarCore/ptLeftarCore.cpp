@@ -48,6 +48,10 @@ Color secondaryRay(Ray &ray, Octree &octree, int depth) {
       intense = 1;
     }
 
+    if (hit.primitive->getType() == eSphere) {
+      std::cout << "SPHERE" << std::endl;
+    }
+
     Color color = secondaryRay(newRay, octree, depth - 1);
     Material currMat = materials[hit.materialId];
     Color diffuseColor = currMat.diffuseColor;
@@ -139,10 +143,10 @@ int main() {
   white.diffuseTexture = nullptr;
   materials.push_back(white);
 
-  Sphere sphere(modelAABB.center + Vector3f(-1, -300, 0), 10, materials.size() - 1);
+  Sphere sphere(modelAABB.center + Vector3f(-50, -300, 0), 10, materials.size() - 1);
   spheres.push_back(sphere);
 
-  Octree octree(triangles);
+  Octree octree(triangles, spheres);
   Camera camera(modelAABB.center + Vector3f(0,-300,0), width, height,
                 45.0f);
   camera.lookAt(camera.origin + Vector3f(-1,0,0));

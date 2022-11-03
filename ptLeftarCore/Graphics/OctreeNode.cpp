@@ -14,44 +14,39 @@ OctreeNode::OctreeNode()
     : topLeftFront(Vector3f()), bottomRightBack(Vector3f()) {}
 
 OctreeNode::OctreeNode(Vector3f topLeftFront, Vector3f bottomRightBack)
-    : topLeftFront(topLeftFront), bottomRightBack(bottomRightBack) {
-}
+    : topLeftFront(topLeftFront), bottomRightBack(bottomRightBack) {}
 
-void OctreeNode::addTriangle(Triangle triangle) {
-  triangles.push_back(triangle);
-}
+void OctreeNode::generatePackedTriangles() {
+  int trianglesCount = triangles.size();
+  if (trianglesCount > 0) {
+    int packsCount = (trianglesCount / 8) + 1;
+    for (int i = 0; i < packsCount; i++) {
+      PackedTriangles packed;
+      for (int j = 0; j < 8; j++) {
+        int trgIdx = (i * 8 + j) % trianglesCount;
+        Vector3f e1 =
+            triangles[trgIdx].v2.position - triangles[trgIdx].v1.position;
+        Vector3f e2 =
+            triangles[trgIdx].v3.position - triangles[trgIdx].v1.position;
+        Vector3f v1 = triangles[trgIdx].v1.position;
 
-void OctreeNode::subdivide() { 
-  if (triangles.size() < 16) {
-    int trianglesCount = triangles.size();
-    if (trianglesCount > 0) {
-      int packsCount = (trianglesCount / 8) + 1;
-      for (int i = 0; i < packsCount; i++) {
-        PackedTriangles packed;
-        for (int j = 0; j < 8; j++) {
-          int trgIdx = (i * 8 + j) % trianglesCount;
-          Vector3f e1 =
-              triangles[trgIdx].v2.position - triangles[trgIdx].v1.position;
-          Vector3f e2 =
-              triangles[trgIdx].v3.position - triangles[trgIdx].v1.position;
-          Vector3f v1 = triangles[trgIdx].v1.position;
-
-          packed.e1[0].m256_f32[j] = e1.x;
-          packed.e1[1].m256_f32[j] = e1.y;
-          packed.e1[2].m256_f32[j] = e1.z;
-          packed.e2[0].m256_f32[j] = e2.x;
-          packed.e2[1].m256_f32[j] = e2.y;
-          packed.e2[2].m256_f32[j] = e2.z;
-          packed.v1[0].m256_f32[j] = v1.x;
-          packed.v1[1].m256_f32[j] = v1.y;
-          packed.v1[2].m256_f32[j] = v1.z;
-          packed.triangles[j] = &triangles[trgIdx];
-        }
-        packedTriangles.push_back(packed);
+        packed.e1[0].m256_f32[j] = e1.x;
+        packed.e1[1].m256_f32[j] = e1.y;
+        packed.e1[2].m256_f32[j] = e1.z;
+        packed.e2[0].m256_f32[j] = e2.x;
+        packed.e2[1].m256_f32[j] = e2.y;
+        packed.e2[2].m256_f32[j] = e2.z;
+        packed.v1[0].m256_f32[j] = v1.x;
+        packed.v1[1].m256_f32[j] = v1.y;
+        packed.v1[2].m256_f32[j] = v1.z;
+        packed.triangles[j] = &triangles[trgIdx];
       }
+      packedTriangles.push_back(packed);
     }
-    return;
   }
+}
+
+void OctreeNode::generateChildren() {
 
   float midx = (topLeftFront.x + bottomRightBack.x) / 2;
   float midy = (topLeftFront.y + bottomRightBack.y) / 2;
@@ -87,15 +82,33 @@ void OctreeNode::subdivide() {
       Vector3f newTopLeftFront(topLeftFront.x, midy, midz);
       Vector3f newBottomRightBack(midx, bottomRightBack.y, bottomRightBack.z);
       newNode = OctreeNode(newTopLeftFront, newBottomRightBack);
-    }  else if (i == BottomLeftBack) {
+    } else if (i == BottomLeftBack) {
       Vector3f newTopLeftFront(midx, midy, midz);
       Vector3f newBottomRightBack(bottomRightBack.x, bottomRightBack.y,
                                   bottomRightBack.z);
       newNode = OctreeNode(newTopLeftFront, newBottomRightBack);
     }
 
-    children.push_back(new OctreeNode(newNode.topLeftFront, newNode.bottomRightBack));
+    children.push_back(
+        new OctreeNode(newNode.topLeftFront, newNode.bottomRightBack));
   }
+}
+
+void OctreeNode::addTriangle(Triangle triangle) {
+  triangles.push_back(triangle);
+}
+
+void OctreeNode::addSphere(Sphere sphere) { 
+  spheres.push_back(sphere);
+}
+
+void OctreeNode::subdivide() { 
+  if (triangles.size() < 16) {
+    generatePackedTriangles();
+    return;
+  }
+
+  generateChildren();
 
   std::vector<Triangle> remainingTriangles;
   for (auto triangle : triangles) {
@@ -118,33 +131,28 @@ void OctreeNode::subdivide() {
   triangles.clear();
   remainingTriangles.swap(triangles);
 
-  int trianglesCount = triangles.size();
-  if (trianglesCount > 0) {
-    int packsCount = (trianglesCount / 8) + 1;
-    for (int i = 0; i < packsCount; i++) {
-      PackedTriangles packed;
-      for (int j = 0; j < 8; j++) {
-        int trgIdx = (i * 8 + j) % trianglesCount;
-        Vector3f e1 =
-            triangles[trgIdx].v2.position - triangles[trgIdx].v1.position;
-        Vector3f e2 =
-            triangles[trgIdx].v3.position - triangles[trgIdx].v1.position;
-        Vector3f v1 = triangles[trgIdx].v1.position;
+  std::vector<Sphere> remainingSpheres;
+  for (auto sphere : spheres) {
+    AABB triangleAABB = sphere.getBoundingBox();
 
-        packed.e1[0].m256_f32[j] = e1.x;
-        packed.e1[1].m256_f32[j] = e1.y;
-        packed.e1[2].m256_f32[j] = e1.z;
-        packed.e2[0].m256_f32[j] = e2.x;
-        packed.e2[1].m256_f32[j] = e2.y;
-        packed.e2[2].m256_f32[j] = e2.z;
-        packed.v1[0].m256_f32[j] = v1.x;
-        packed.v1[1].m256_f32[j] = v1.y;
-        packed.v1[2].m256_f32[j] = v1.z;
-        packed.triangles[j] = &triangles[trgIdx];
+    bool foundSubnode = false;
+    for (auto child : children) {
+      AABB temp(child->topLeftFront, child->bottomRightBack);
+      if (temp.fullyContains(triangleAABB)) {
+        child->addSphere(sphere);
+        foundSubnode = true;
       }
-      packedTriangles.push_back(packed);
+    }
+
+    if (!foundSubnode) {
+      remainingSpheres.push_back(sphere);
     }
   }
+
+  spheres.clear();
+  remainingSpheres.swap(spheres);
+
+  generatePackedTriangles();
 
   for (auto child : children) {
     child->subdivide();
@@ -173,7 +181,24 @@ bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
     if (!pack.hit(packedRay, result, tempHit)) {
       continue;
     }
-    
+
+    intersectionDistance = ray.origin.distance(tempHit.position);
+    if (nearestHit.primitive != nullptr &&
+        intersectionDistance > nearestDistance) {
+      continue;
+    }
+
+    nearestHit = tempHit;
+    nearestDistance = intersectionDistance;
+  }
+
+  for (auto sphere : spheres) {
+    Primitive::HitDescriptor tempHit;
+    float intersectionDistance;
+    if (!sphere.hit(ray, tempHit)) {
+      continue;
+    }
+
     intersectionDistance = ray.origin.distance(tempHit.position);
     if (nearestHit.primitive != nullptr &&
         intersectionDistance > nearestDistance) {

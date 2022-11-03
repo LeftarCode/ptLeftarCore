@@ -21,4 +21,5 @@ public:
   Primitive(PrimitiveType type);
   virtual bool hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) = 0;
   virtual AABB getBoundingBox() const = 0;
+  PrimitiveType getType() const { return type; };
 };
