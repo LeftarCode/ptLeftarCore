@@ -12,3 +12,4 @@ void __vectorcall avx_multi_cross(__m256 result[3], const __m256 a[3],
 __m256 __vectorcall avx_multi_dot(const __m256 a[3], const __m256 b[3]);
 void __vectorcall avx_multi_sub(__m256 result[3], const __m256 a[3],
                                 const __m256 b[3]);
+float randomFloat(float min, float max);

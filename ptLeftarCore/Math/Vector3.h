@@ -1,6 +1,6 @@
 #pragma once
 #include <math.h>
-#include <xmmintrin.h>
+#include "Base.h"
 
 class Vector3f { 
 public:
@@ -12,9 +12,9 @@ public:
   
   }
 
-  float length() { 
-    return sqrt(x * x + y * y + z * z);
-  }
+  float length() { return sqrt(squareLength()); }
+
+  float squareLength() const { return x * x + y * y + z * z; }
 
   void normalize() { 
     float vectorLength = this->length();
@@ -113,5 +113,20 @@ public:
     result.z = z / value;
 
     return result;
+  }
+
+  static Vector3f random(float min, float max) {
+    return Vector3f(randomFloat(min, max), randomFloat(min, max),
+                    randomFloat(min, max));
+  }
+
+  static Vector3f randomUnitSphere() {
+    while (true) {
+      auto p = random(-1, 1);
+      auto length = p.length();
+      if (length * length >= 1)
+        continue;
+      return p;
+    }
   }
 };
