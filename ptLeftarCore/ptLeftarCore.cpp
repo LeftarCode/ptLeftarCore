@@ -9,6 +9,7 @@
 #include "Graphics/Octree.h"
 #include <thread>
 #include "Graphics/Material.h"
+#include "Graphics/Sphere.h"
 #include <array>
 #include <random>
 
@@ -16,6 +17,7 @@ const int ThreadsCount = 16;
 Color *data = nullptr;
 std::vector<Material> materials;
 std::vector<Triangle> triangles;
+std::vector<Sphere> spheres;
 
 Color secondaryRay(Ray &ray, Octree &octree, int depth) {
   if (depth <= 0) {
@@ -48,7 +50,10 @@ Color secondaryRay(Ray &ray, Octree &octree, int depth) {
 
     Color color = secondaryRay(newRay, octree, depth - 1);
     Material currMat = materials[hit.materialId];
-    Color diffuseColor = currMat.diffuseTexture->sample(hit.uv);
+    Color diffuseColor = currMat.diffuseColor;
+    if (currMat.diffuseTexture != nullptr) {
+      diffuseColor = currMat.diffuseTexture->sample(hit.uv);
+    }
     diffuseColor.r *= intense;
     diffuseColor.g *= intense;
     diffuseColor.b *= intense;
@@ -71,7 +76,7 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
 
       for (int sample = 0; sample < 1; sample++) {
         Color color = data[j * width + i];
-        Color result = secondaryRay(r, octree, 4);
+        Color result = secondaryRay(r, octree, 1);
 
         data[j * width + i] = blendColor(color, result, 0.5);
       }
@@ -128,6 +133,14 @@ int main() {
       triangles.push_back(triangle);
     }
   }
+
+  Material white;
+  white.diffuseColor = Color{255, 255, 255};
+  white.diffuseTexture = nullptr;
+  materials.push_back(white);
+
+  Sphere sphere(modelAABB.center + Vector3f(-1, -300, 0), 10, materials.size() - 1);
+  spheres.push_back(sphere);
 
   Octree octree(triangles);
   Camera camera(modelAABB.center + Vector3f(0,-300,0), width, height,

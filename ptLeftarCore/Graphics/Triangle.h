@@ -17,7 +17,7 @@ public:
   Triangle();
   virtual bool hit(const Ray &ray, Primitive::HitDescriptor& hitDescriptor);
   Primitive::HitDescriptor getHitDescriptorFromPoint(Vector3f point);
-  AABB getBoundingBox() const;
+  virtual AABB getBoundingBox() const;
 };
 
 class PackedTriangles {

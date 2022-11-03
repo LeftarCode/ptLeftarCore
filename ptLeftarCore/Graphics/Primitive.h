@@ -1,9 +1,10 @@
 #pragma once
 #include "Color.h"
 #include "../Math/Ray.h"
+#include "AABB.h"
 
 enum PrimitiveType {
-  eTriangle
+  eTriangle, eSphere
 };
 
 class Primitive {
@@ -19,4 +20,5 @@ public:
 
   Primitive(PrimitiveType type);
   virtual bool hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) = 0;
+  virtual AABB getBoundingBox() const = 0;
 };
