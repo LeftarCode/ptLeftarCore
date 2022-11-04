@@ -132,21 +132,21 @@ bool __vectorcall PackedTriangles::hit(
     PackedIntersectionResult& result,
     Primitive::HitDescriptor& hitDescriptor) {
   __m256 q[3];
-  avx_multi_cross(q, packedRays.direction, e2);
+  multiCross(q, packedRays.direction, e2);
 
-  __m256 a = avx_multi_dot(e1, q);
+  __m256 a = multiDot(e1, q);
   __m256 f = _mm256_div_ps(IdentityM256, a);
 
   __m256 s[3];
-  avx_multi_sub(s, packedRays.origin, v1);
+  multiSub(s, packedRays.origin, v1);
 
-  __m256 u = _mm256_mul_ps(f, avx_multi_dot(s, q));
+  __m256 u = _mm256_mul_ps(f, multiDot(s, q));
 
   __m256 r[3];
-  avx_multi_cross(r, s, e1);
+  multiCross(r, s, e1);
 
-  __m256 v = _mm256_mul_ps(f, avx_multi_dot(packedRays.direction, r));
-  __m256 t = _mm256_mul_ps(f, avx_multi_dot(e2, r));
+  __m256 v = _mm256_mul_ps(f, multiDot(packedRays.direction, r));
+  __m256 t = _mm256_mul_ps(f, multiDot(e2, r));
 
   __m256 failed =
       _mm256_and_ps(_mm256_cmp_ps(a, NegativeEpsilonM256, _CMP_GT_OQ),
