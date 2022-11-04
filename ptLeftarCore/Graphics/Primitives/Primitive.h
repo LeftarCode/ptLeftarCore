@@ -1,25 +1,22 @@
 #pragma once
-#include "Color.h"
-#include "../Math/Ray.h"
-#include "BoundingBox.h"
+#include "../../Math/Ray.h"
+#include "../BoundingBox.h"
+#include "../Color.h"
 
-enum PrimitiveType {
-  eTriangle, eSphere
-};
+enum PrimitiveType { eTriangle, eSphere };
 
 class Primitive {
   PrimitiveType type;
 
-
-public:
+ public:
   struct HitDescriptor {
     Vector3f position, normal, uv;
-    Primitive *primitive = nullptr;
+    Primitive* primitive = nullptr;
     int materialId;
   };
 
   Primitive(PrimitiveType type);
-  virtual bool hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) = 0;
+  virtual bool hit(const Ray& ray, Primitive::HitDescriptor& hitDescriptor) = 0;
   virtual BoundingBox getBoundingBox() const = 0;
   PrimitiveType getType() const { return type; };
 };

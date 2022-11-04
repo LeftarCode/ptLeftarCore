@@ -2,7 +2,7 @@
 #include "../Math/Vector3.h"
 
 class Vertex {
-public:
+ public:
   Vector3f position;
   Vector3f normal;
   Vector3f uv;

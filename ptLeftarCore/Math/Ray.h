@@ -1,7 +1,9 @@
 #pragma once
-#include "./Vector3.h"
 #include <immintrin.h>
+
 #include <limits>
+
+#include "./Vector3.h"
 
 struct PackedRay {
   __m256 origin[3];
@@ -14,6 +16,6 @@ struct PackedIntersectionResult {
 };
 
 class Ray {
-public:
+ public:
   Vector3f origin, direction, invDirection;
 };

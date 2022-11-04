@@ -1,13 +1,14 @@
 #pragma once
-#include "Color.h"
-#include "../Math/Vector3.h"
 #include <string>
 
+#include "../Math/Vector3.h"
+#include "Color.h"
+
 class Texture {
-  ImageColor *data;
+  ImageColor* data;
   int width, height, comp;
 
-public:
+ public:
   Color sample(Vector3f uv);
   void loadFromFile(std::string filename);
   ~Texture();

@@ -1,10 +1,9 @@
-#include <algorithm>
 #include "BoundingBox.h"
+
+#include <algorithm>
 #include <utility>
 
-BoundingBox::BoundingBox(Vector3f min, Vector3f max)
-    : min(min), max(max) {
-
+BoundingBox::BoundingBox(Vector3f min, Vector3f max) : min(min), max(max) {
   float midx = (min.x + max.x) / 2;
   float midy = (min.y + max.y) / 2;
   float midz = (min.z + max.z) / 2;
@@ -37,9 +36,8 @@ void BoundingBox::extend(Vector3f point) {
 }
 
 bool BoundingBox::contains(Vector3f point) {
-  return point.x >= min.x && point.x <= max.x &&
-         point.y >= min.y && point.y <= max.y &&
-         point.z >= min.z && point.z <= max.z;
+  return point.x >= min.x && point.x <= max.x && point.y >= min.y &&
+         point.y <= max.y && point.z >= min.z && point.z <= max.z;
 }
 
 bool BoundingBox::fullyContains(BoundingBox aabb) {
@@ -47,7 +45,7 @@ bool BoundingBox::fullyContains(BoundingBox aabb) {
 }
 
 bool BoundingBox::intersect(Ray ray, float& distance) {
-  const Vector3f &dirfrac = ray.invDirection;
+  const Vector3f& dirfrac = ray.invDirection;
 
   float t1 = (min.x - ray.origin.x) * dirfrac.x;
   float t2 = (max.x - ray.origin.x) * dirfrac.x;
@@ -56,14 +54,12 @@ bool BoundingBox::intersect(Ray ray, float& distance) {
   float t5 = (min.z - ray.origin.z) * dirfrac.z;
   float t6 = (max.z - ray.origin.z) * dirfrac.z;
 
-  float tmax =
-      std::min({std::max(t1, t2), std::max(t3, t4), std::max(t5, t6)});
+  float tmax = std::min({std::max(t1, t2), std::max(t3, t4), std::max(t5, t6)});
   if (tmax < 0.0) {
     return false;
   }
 
-  float tmin =
-      std::max({std::min(t1, t2), std::min(t3, t4), std::min(t5, t6)});
+  float tmin = std::max({std::min(t1, t2), std::min(t3, t4), std::min(t5, t6)});
   if (tmin > tmax) {
     return false;
   }

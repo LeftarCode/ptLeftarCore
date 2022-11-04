@@ -1,25 +1,26 @@
 ﻿#include <iostream>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../external/stbi/stb_image_write.h"
-#include "Graphics/Color.h"
-#include "Math/Ray.h"
-#include "Graphics/Triangle.h"
-#include "Math/Camera.h"
-#include "../external/objloader.h"
-#include "Graphics/Octree.h"
-#include <thread>
-#include "Graphics/Material.h"
-#include "Graphics/Sphere.h"
 #include <array>
 #include <random>
+#include <thread>
+
+#include "../external/objloader.h"
+#include "../external/stbi/stb_image_write.h"
+#include "Graphics/Color.h"
+#include "Graphics/Material.h"
+#include "Graphics/Octree.h"
+#include "Graphics/Primitives/Sphere.h"
+#include "Graphics/Primitives/Triangle.h"
+#include "Math/Camera.h"
+#include "Math/Ray.h"
 
 const int ThreadsCount = 16;
-ImageColor *data = nullptr;
+ImageColor* data = nullptr;
 std::vector<Material> materials;
 std::vector<Triangle> triangles;
 std::vector<Sphere> spheres;
 
-Color secondaryRay(Ray &ray, Octree &octree, int depth) {
+Color secondaryRay(Ray& ray, Octree& octree, int depth) {
   if (depth <= 0) {
     return Color{1, 1, 1};
   }
@@ -36,7 +37,8 @@ Color secondaryRay(Ray &ray, Octree &octree, int depth) {
     newRay.origin = newPostion;
     newRay.direction = newDirection;
     newRay.direction.normalize();
-    newRay.invDirection = Vector3f(1.0f / newRay.direction.x, 1.0f / newRay.direction.y,
+    newRay.invDirection =
+        Vector3f(1.0f / newRay.direction.x, 1.0f / newRay.direction.y,
                  1.0f / newRay.direction.z);
     newRay.invDirection.normalize();
 
@@ -55,14 +57,18 @@ Color secondaryRay(Ray &ray, Octree &octree, int depth) {
   return Color{0, 0, 0};
 }
 
-void render(int width, int height, Camera& camera, Octree& octree, int workerID) {
+void render(int width,
+            int height,
+            Camera& camera,
+            Octree& octree,
+            int workerID) {
   int partialWidth = width / ThreadsCount;
   for (int i = partialWidth * workerID;
        i < partialWidth * workerID + partialWidth; i++) {
     for (int j = 0; j < height; j++) {
       Ray r = camera.castRay(i, j);
 
-      Color result{0, 0, 0}; 
+      Color result{0, 0, 0};
       for (int sample = 0; sample < 64; sample++) {
         result += secondaryRay(r, octree, 4);
       }
@@ -79,12 +85,13 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
 int main() {
   int width = 160;
   int height = 160;
-  data = (ImageColor *)malloc(sizeof(ImageColor) * width * height);
+  data = (ImageColor*)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
   BoundingBox modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   objl::Loader Loader;
-  bool succes = Loader.LoadFile("crytek-sponza-huge-vray-obj/crytek-sponza-huge-vray.obj");
+  bool succes = Loader.LoadFile(
+      "crytek-sponza-huge-vray-obj/crytek-sponza-huge-vray.obj");
   for (int i = 0; i < Loader.LoadedMeshes.size(); i++) {
     objl::Mesh curMesh = Loader.LoadedMeshes[i];
     std::vector<Vertex> vertices;
@@ -93,11 +100,11 @@ int main() {
       vertex.position = Vector3f(curMesh.Vertices[j].Position.X,
                                  curMesh.Vertices[j].Position.Y,
                                  curMesh.Vertices[j].Position.Z);
-      vertex.normal = Vector3f(curMesh.Vertices[j].Normal.X, curMesh.Vertices[j].Normal.Y,
+      vertex.normal =
+          Vector3f(curMesh.Vertices[j].Normal.X, curMesh.Vertices[j].Normal.Y,
                    curMesh.Vertices[j].Normal.Z);
       vertex.uv = Vector3f(curMesh.Vertices[j].TextureCoordinate.X,
-                           curMesh.Vertices[j].TextureCoordinate.Y,
-                           0.0f);
+                           curMesh.Vertices[j].TextureCoordinate.Y, 0.0f);
 
       vertices.push_back(vertex);
     }
@@ -107,16 +114,17 @@ int main() {
     material.diffuseColor.g = curMesh.MeshMaterial.Kd.Y;
     material.diffuseColor.b = curMesh.MeshMaterial.Kd.Z;
     if (curMesh.MeshMaterial.map_Kd.length() > 0) {
-      Texture *diffuse = new Texture();
-      diffuse->loadFromFile("crytek-sponza-huge-vray-obj\\" + curMesh.MeshMaterial.map_Kd);
+      Texture* diffuse = new Texture();
+      diffuse->loadFromFile("crytek-sponza-huge-vray-obj\\" +
+                            curMesh.MeshMaterial.map_Kd);
       material.diffuseTexture = diffuse;
     }
     materials.push_back(material);
-    
-		for (int j = 0; j < curMesh.Indices.size(); j += 3) {
+
+    for (int j = 0; j < curMesh.Indices.size(); j += 3) {
       Triangle triangle = Triangle(vertices[curMesh.Indices[j]],
-                        vertices[curMesh.Indices[j + 1]],
-                        vertices[curMesh.Indices[j + 2]]);
+                                   vertices[curMesh.Indices[j + 1]],
+                                   vertices[curMesh.Indices[j + 2]]);
       triangle.materialId = materials.size() - 1;
 
       modelAABB.extend(vertices[curMesh.Indices[j]].position);
@@ -131,13 +139,13 @@ int main() {
   white.diffuseTexture = nullptr;
   materials.push_back(white);
 
-  Sphere sphere(modelAABB.center + Vector3f(-230, -400, 0), 50, materials.size() - 1);
-  //spheres.push_back(sphere);
+  Sphere sphere(modelAABB.center + Vector3f(-230, -400, 0), 50,
+                materials.size() - 1);
+  // spheres.push_back(sphere);
 
   Octree octree(triangles, spheres);
-  Camera camera(modelAABB.center + Vector3f(0,-300,0), width, height,
-                45.0f);
-  camera.lookAt(camera.origin + Vector3f(-1,0,0));
+  Camera camera(modelAABB.center + Vector3f(0, -300, 0), width, height, 45.0f);
+  camera.lookAt(camera.origin + Vector3f(-1, 0, 0));
   std::vector<std::thread> threads;
   threads.reserve(ThreadsCount);
   for (int i = 0; i < ThreadsCount; i++) {
@@ -153,5 +161,5 @@ int main() {
   stbi_write_png("render.png", width, height, 3, data, 0);
   free(data);
 
-	return 0;
+  return 0;
 }

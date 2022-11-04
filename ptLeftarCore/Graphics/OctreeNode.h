@@ -1,7 +1,8 @@
 #pragma once
-#include "../Graphics/Triangle.h"
-#include "../Graphics/Sphere.h"
 #include <vector>
+
+#include "../Graphics/Primitives/Sphere.h"
+#include "../Graphics/Primitives/Triangle.h"
 
 class OctreeNode {
   std::vector<OctreeNode*> children;
@@ -12,7 +13,8 @@ class OctreeNode {
 
   void generatePackedTriangles();
   void generateChildren();
-public:
+
+ public:
   OctreeNode();
   OctreeNode(BoundingBox aabb);
   void addTriangle(Triangle triangles);

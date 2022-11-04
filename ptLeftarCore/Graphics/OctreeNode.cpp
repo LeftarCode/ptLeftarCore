@@ -1,4 +1,5 @@
 #include "OctreeNode.h"
+
 #include <algorithm>
 
 #define TopLeftFront 0
@@ -10,11 +11,9 @@
 #define BottomRightBack 6
 #define BottomLeftBack 7
 
-OctreeNode::OctreeNode()
-    : aabb(BoundingBox(Vector3f(), Vector3f())) {}
+OctreeNode::OctreeNode() : aabb(BoundingBox(Vector3f(), Vector3f())) {}
 
-OctreeNode::OctreeNode(BoundingBox aabb)
-    : aabb(aabb) {}
+OctreeNode::OctreeNode(BoundingBox aabb) : aabb(aabb) {}
 
 void OctreeNode::generatePackedTriangles() {
   int trianglesCount = triangles.size();
@@ -47,7 +46,6 @@ void OctreeNode::generatePackedTriangles() {
 }
 
 void OctreeNode::generateChildren() {
-
   Vector3f center = aabb.center;
 
   for (int i = 0; i < 8; i++) {
@@ -94,11 +92,11 @@ void OctreeNode::addTriangle(Triangle triangle) {
   triangles.push_back(triangle);
 }
 
-void OctreeNode::addSphere(Sphere sphere) { 
+void OctreeNode::addSphere(Sphere sphere) {
   spheres.push_back(sphere);
 }
 
-void OctreeNode::subdivide() { 
+void OctreeNode::subdivide() {
   if (triangles.size() < 16) {
     generatePackedTriangles();
     return;
@@ -155,7 +153,7 @@ void OctreeNode::subdivide() {
   }
 }
 
-bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
+bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor& hitDescriptor) const {
   Primitive::HitDescriptor nearestHit;
   float nearestDistance = std::numeric_limits<float>::max();
 
@@ -220,12 +218,12 @@ bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
   }
 
   std::sort(considered_children.begin(), considered_children.end(),
-            [](const node_distance &a, const node_distance &b) {
+            [](const node_distance& a, const node_distance& b) {
               return a.second < b.second;
             });
 
   for (const auto [n_ptr, dist] : considered_children) {
-    const OctreeNode &n = *n_ptr;
+    const OctreeNode& n = *n_ptr;
 
     Vector3f intersectionPoint;
     float interestionDistance;
@@ -236,7 +234,8 @@ bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor &hitDescriptor) const {
     }
 
     interestionDistance = ray.origin.distance(tempHit.position);
-    if (nearestHit.primitive != nullptr && interestionDistance > nearestDistance) {
+    if (nearestHit.primitive != nullptr &&
+        interestionDistance > nearestDistance) {
       continue;
     }
 

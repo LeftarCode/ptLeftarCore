@@ -31,10 +31,10 @@ Color Texture::sample(Vector3f uv) {
 }
 
 void Texture::loadFromFile(std::string filename) {
-  data = (ImageColor *)stbi_load(filename.c_str(), &width, &height, &comp,
-                                 STBI_rgb);
+  data = (ImageColor*)stbi_load(filename.c_str(), &width, &height, &comp,
+                                STBI_rgb);
 }
 
-Texture::~Texture() { 
+Texture::~Texture() {
   stbi_image_free(data);
 }

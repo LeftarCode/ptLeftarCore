@@ -5,9 +5,14 @@ float Convert(float degree) {
   return (degree * (pi / 180));
 }
 
-Camera::Camera(Vector3f origin, float viewportWidth, float viewportHeight, float fieldOfView)
-    : origin(origin), viewportWidth(viewportWidth),
-      viewportHeight(viewportHeight), fieldOfView(fieldOfView) {
+Camera::Camera(Vector3f origin,
+               float viewportWidth,
+               float viewportHeight,
+               float fieldOfView)
+    : origin(origin),
+      viewportWidth(viewportWidth),
+      viewportHeight(viewportHeight),
+      fieldOfView(fieldOfView) {
   float aspect = viewportHeight / viewportWidth;
   horizontal = Vector3f{1.0f, 0.0f, 0.0f};
   vertical = Vector3f{0.0f, aspect, 0.0f};
@@ -31,7 +36,7 @@ Ray Camera::castRay(int viewportX, int viewportY) {
   return r;
 }
 
-void Camera::lookAt(const Vector3f &point) {
+void Camera::lookAt(const Vector3f& point) {
   Vector3f lookAtPoint = point;
 
   Vector3f viewDirection = lookAtPoint - origin;

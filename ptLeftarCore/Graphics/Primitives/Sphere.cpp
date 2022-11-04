@@ -1,7 +1,10 @@
 #include "Sphere.h"
 
 Sphere::Sphere(Vector3f center, float radius, int materialId)
-    : Primitive(eSphere), center(center), radius(radius), materialId(materialId) {
+    : Primitive(eSphere),
+      center(center),
+      radius(radius),
+      materialId(materialId) {
   boundingBox = BoundingBox(center, center);
   boundingBox.extend(center + radius);
   boundingBox.extend(center - radius);
@@ -36,4 +39,6 @@ bool Sphere::hit(const Ray& ray, Primitive::HitDescriptor& hitDescriptor) {
   return true;
 }
 
-BoundingBox Sphere::getBoundingBox() const { return boundingBox; }
+BoundingBox Sphere::getBoundingBox() const {
+  return boundingBox;
+}

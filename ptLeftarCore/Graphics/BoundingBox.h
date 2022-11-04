@@ -1,9 +1,9 @@
 #pragma once
-#include "../Math/Vector3.h"
 #include "../Math/Ray.h"
+#include "../Math/Vector3.h"
 
 class BoundingBox {
-public:
+ public:
   BoundingBox(Vector3f topLeftFront, Vector3f bottomRightBack);
   BoundingBox();
   void extend(Vector3f point);

@@ -1,4 +1,5 @@
 #include "Triangle.h"
+
 #include <algorithm>
 
 static float AreaOfTriangle(float a, float b, float c) {
@@ -18,11 +19,9 @@ Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
   Vector3f e2 = v3.position - v1.position;
 }
 
-Triangle::Triangle()
-    : Primitive(PrimitiveType::eTriangle) {
-}
+Triangle::Triangle() : Primitive(PrimitiveType::eTriangle) {}
 
-bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
+bool Triangle::hit(const Ray& ray, Primitive::HitDescriptor& hitDescriptor) {
   BoundingBox aabb = getBoundingBox();
   Vector3f dirfrac = ray.invDirection;
 
@@ -33,14 +32,12 @@ bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
   float t5 = (aabb.min.z - ray.origin.z) * dirfrac.z;
   float t6 = (aabb.max.z - ray.origin.z) * dirfrac.z;
 
-  float tmax =
-      std::min({std::max(t1, t2), std::max(t3, t4), std::max(t5, t6)});
+  float tmax = std::min({std::max(t1, t2), std::max(t3, t4), std::max(t5, t6)});
   if (tmax < 0.0) {
     return false;
   }
 
-  float tmin =
-      std::max({std::min(t1, t2), std::min(t3, t4), std::min(t5, t6)});
+  float tmin = std::max({std::min(t1, t2), std::min(t3, t4), std::min(t5, t6)});
   if (tmin > tmax) {
     return false;
   }
@@ -72,7 +69,7 @@ bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
     return false;
   }
 
-  Vector3f point = ray.origin + ray.direction * final_distance; 
+  Vector3f point = ray.origin + ray.direction * final_distance;
 
   float a = v1.position.distance(v2.position);
   float b = v2.position.distance(v3.position);
@@ -122,7 +119,7 @@ Primitive::HitDescriptor Triangle::getHitDescriptorFromPoint(Vector3f point) {
   return hitDescriptor;
 }
 
-BoundingBox Triangle::getBoundingBox() const { 
+BoundingBox Triangle::getBoundingBox() const {
   BoundingBox aabb(v1.position, v1.position);
   aabb.extend(v2.position);
   aabb.extend(v3.position);
@@ -130,10 +127,10 @@ BoundingBox Triangle::getBoundingBox() const {
   return aabb;
 }
 
-bool __vectorcall PackedTriangles::hit(const PackedRay& packedRays,
-                      PackedIntersectionResult& result,
+bool __vectorcall PackedTriangles::hit(
+    const PackedRay& packedRays,
+    PackedIntersectionResult& result,
     Primitive::HitDescriptor& hitDescriptor) {
-
   __m256 q[3];
   avx_multi_cross(q, packedRays.direction, e2);
 
@@ -167,7 +164,7 @@ bool __vectorcall PackedTriangles::hit(const PackedRay& packedRays,
   if (mask != 0xFF) {
     result.idx = -1;
 
-    float *ptr = (float *)&tResults;
+    float* ptr = (float*)&tResults;
     for (int i = 0; i < 8; ++i) {
       if (ptr[i] >= 0.0f && ptr[i] < result.t) {
         result.t = ptr[i];
@@ -183,7 +180,7 @@ bool __vectorcall PackedTriangles::hit(const PackedRay& packedRays,
       r.origin.y = packedRays.origin[1].m256_f32[0];
       r.origin.z = packedRays.origin[2].m256_f32[0];
 
-      Triangle *triangle = triangles[result.idx];
+      Triangle* triangle = triangles[result.idx];
       Vector3f point = r.origin + r.direction * result.t;
 
       hitDescriptor = triangle->getHitDescriptorFromPoint(point);

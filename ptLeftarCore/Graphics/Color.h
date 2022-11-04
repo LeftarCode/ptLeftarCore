@@ -1,13 +1,13 @@
 #pragma once
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 
 struct ImageColor {
   uint8_t r, g, b;
 };
 
 class Color {
-public:
+ public:
   float r, g, b;
 
   Color operator*(float f) {

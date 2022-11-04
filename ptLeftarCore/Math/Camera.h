@@ -2,7 +2,7 @@
 #include "Ray.h"
 
 class Camera {
-public:
+ public:
   Vector3f origin;
   float viewportWidth, viewportHeight;
   float focalLength = 1.0f;
@@ -14,8 +14,10 @@ public:
 
   Vector3f viewPlaneBottomLeftPoint, xIncVector, yIncVector;
 
-public:
-  Camera(Vector3f origin, float viewportWidth, float viewportHeight,
+ public:
+  Camera(Vector3f origin,
+         float viewportWidth,
+         float viewportHeight,
          float fieldOfView);
   Ray castRay(int viewportX, int viewportY);
   void lookAt(const Vector3f& point);
