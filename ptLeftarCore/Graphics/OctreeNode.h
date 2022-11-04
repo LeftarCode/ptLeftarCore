@@ -8,13 +8,13 @@ class OctreeNode {
   std::vector<Triangle> triangles;
   std::vector<Sphere> spheres;
   std::vector<PackedTriangles> packedTriangles;
-  Vector3f topLeftFront, bottomRightBack;
+  BoundingBox aabb;
 
   void generatePackedTriangles();
   void generateChildren();
 public:
   OctreeNode();
-  OctreeNode(Vector3f topLeftFront, Vector3f bottomRightBack);
+  OctreeNode(BoundingBox aabb);
   void addTriangle(Triangle triangles);
   void addSphere(Sphere sphere);
   void subdivide();

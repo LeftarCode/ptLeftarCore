@@ -2,14 +2,14 @@
 #include <algorithm>
 
 static float AreaOfTriangle(float a, float b, float c) {
-  float p = (a + b + c) / 2.0;
+  float p = (a + b + c) / 2.0f;
   float area_sqr = p * (p - a) * (p - b) * (p - c);
 
   if (area_sqr < 0.0) {
     return 0.0;
   }
 
-  return sqrt(area_sqr);
+  return sqrtf(area_sqr);
 }
 
 Triangle::Triangle(Vertex v1, Vertex v2, Vertex v3)
@@ -23,7 +23,7 @@ Triangle::Triangle()
 }
 
 bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
-  AABB aabb = getBoundingBox();
+  BoundingBox aabb = getBoundingBox();
   Vector3f dirfrac = ray.invDirection;
 
   float t1 = (aabb.min.x - ray.origin.x) * dirfrac.x;
@@ -54,7 +54,7 @@ bool Triangle::hit(const Ray &ray, Primitive::HitDescriptor &hitDescriptor) {
     return false;
   }
 
-  float inv_det = 1.0 / det;
+  float inv_det = 1.0f / det;
   Vector3f tvec = ray.origin - v1.position;
   float u = tvec.dotProduct(pvec) * inv_det;
   if (u < 0.0 || u > 1.0) {
@@ -122,10 +122,74 @@ Primitive::HitDescriptor Triangle::getHitDescriptorFromPoint(Vector3f point) {
   return hitDescriptor;
 }
 
-AABB Triangle::getBoundingBox() const { 
-  AABB aabb(v1.position, v1.position);
+BoundingBox Triangle::getBoundingBox() const { 
+  BoundingBox aabb(v1.position, v1.position);
   aabb.extend(v2.position);
   aabb.extend(v3.position);
 
   return aabb;
+}
+
+bool __vectorcall PackedTriangles::hit(const PackedRay& packedRays,
+                      PackedIntersectionResult& result,
+    Primitive::HitDescriptor& hitDescriptor) {
+
+  __m256 q[3];
+  avx_multi_cross(q, packedRays.direction, e2);
+
+  __m256 a = avx_multi_dot(e1, q);
+  __m256 f = _mm256_div_ps(IdentityM256, a);
+
+  __m256 s[3];
+  avx_multi_sub(s, packedRays.origin, v1);
+
+  __m256 u = _mm256_mul_ps(f, avx_multi_dot(s, q));
+
+  __m256 r[3];
+  avx_multi_cross(r, s, e1);
+
+  __m256 v = _mm256_mul_ps(f, avx_multi_dot(packedRays.direction, r));
+  __m256 t = _mm256_mul_ps(f, avx_multi_dot(e2, r));
+
+  __m256 failed =
+      _mm256_and_ps(_mm256_cmp_ps(a, NegativeEpsilonM256, _CMP_GT_OQ),
+                    _mm256_cmp_ps(a, PositiveEpsilonM256, _CMP_LT_OQ));
+
+  failed = _mm256_or_ps(failed, _mm256_cmp_ps(u, ZeroM256, _CMP_LT_OQ));
+  failed = _mm256_or_ps(failed, _mm256_cmp_ps(v, ZeroM256, _CMP_LT_OQ));
+  failed = _mm256_or_ps(
+      failed, _mm256_cmp_ps(_mm256_add_ps(u, v), IdentityM256, _CMP_GT_OQ));
+  failed = _mm256_or_ps(failed, _mm256_cmp_ps(t, ZeroM256, _CMP_LT_OQ));
+
+  __m256 tResults = _mm256_blendv_ps(t, MinusIdentityM256, failed);
+
+  int mask = _mm256_movemask_ps(tResults);
+  if (mask != 0xFF) {
+    result.idx = -1;
+
+    float *ptr = (float *)&tResults;
+    for (int i = 0; i < 8; ++i) {
+      if (ptr[i] >= 0.0f && ptr[i] < result.t) {
+        result.t = ptr[i];
+        result.idx = i;
+      }
+    }
+    if (result.idx != -1) {
+      Ray r;
+      r.direction.x = packedRays.direction[0].m256_f32[0];
+      r.direction.y = packedRays.direction[1].m256_f32[0];
+      r.direction.z = packedRays.direction[2].m256_f32[0];
+      r.origin.x = packedRays.origin[0].m256_f32[0];
+      r.origin.y = packedRays.origin[1].m256_f32[0];
+      r.origin.z = packedRays.origin[2].m256_f32[0];
+
+      Triangle *triangle = triangles[result.idx];
+      Vector3f point = r.origin + r.direction * result.t;
+
+      hitDescriptor = triangle->getHitDescriptorFromPoint(point);
+      return true;
+    }
+  }
+
+  return false;
 }

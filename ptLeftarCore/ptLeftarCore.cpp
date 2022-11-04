@@ -82,7 +82,7 @@ int main() {
   data = (ImageColor *)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
-  AABB modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
+  BoundingBox modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   objl::Loader Loader;
   bool succes = Loader.LoadFile("crytek-sponza-huge-vray-obj/crytek-sponza-huge-vray.obj");
   for (int i = 0; i < Loader.LoadedMeshes.size(); i++) {
@@ -128,8 +128,6 @@ int main() {
 
   Material white;
   white.diffuseColor = Color{1, 1, 1};
-  white.isEmissive = true;
-  white.emissiveColor = Color{1, 1, 1};
   white.diffuseTexture = nullptr;
   materials.push_back(white);
 

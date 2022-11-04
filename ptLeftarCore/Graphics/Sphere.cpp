@@ -2,7 +2,7 @@
 
 Sphere::Sphere(Vector3f center, float radius, int materialId)
     : Primitive(eSphere), center(center), radius(radius), materialId(materialId) {
-  boundingBox = AABB(center, center);
+  boundingBox = BoundingBox(center, center);
   boundingBox.extend(center + radius);
   boundingBox.extend(center - radius);
 }
@@ -22,7 +22,7 @@ bool Sphere::hit(const Ray& ray, Primitive::HitDescriptor& hitDescriptor) {
     return false;
   }
 
-  float t = -b - sqrt(discr);
+  float t = -b - sqrtf(discr);
   if (t < 0.0f) {
     t = 0.0f;
   }
@@ -36,4 +36,4 @@ bool Sphere::hit(const Ray& ray, Primitive::HitDescriptor& hitDescriptor) {
   return true;
 }
 
-AABB Sphere::getBoundingBox() const { return boundingBox; }
+BoundingBox Sphere::getBoundingBox() const { return boundingBox; }

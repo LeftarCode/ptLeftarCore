@@ -1,7 +1,7 @@
 #include "Camera.h"
 
 float Convert(float degree) {
-  float pi = 3.141592;
+  float pi = 3.141592f;
   return (degree * (pi / 180));
 }
 
@@ -40,7 +40,7 @@ void Camera::lookAt(const Vector3f &point) {
   Vector3f u = viewDirection.crossProduct(Vector3f(0, -1, 0));
   Vector3f v = u.crossProduct(viewDirection);
 
-  float viewPlaneHalfWidth = tan(Convert(fieldOfView));
+  float viewPlaneHalfWidth = tanf(Convert(fieldOfView));
   float aspectRation = viewportHeight / viewportWidth;
   float viewPlaneHalfHeight = aspectRation * viewPlaneHalfWidth;
 

@@ -2,7 +2,7 @@
 #include <limits>
 
 Octree::Octree(std::vector<Triangle> &triangles, std::vector<Sphere> &spheres) {
-  AABB aabb = AABB();
+  BoundingBox aabb = BoundingBox();
   for (auto triangle : triangles) {
     aabb.extend(triangle.v1.position);
     aabb.extend(triangle.v2.position);
@@ -14,7 +14,7 @@ Octree::Octree(std::vector<Triangle> &triangles, std::vector<Sphere> &spheres) {
     aabb.extend(sphere.center - sphere.radius);
   }
   
-  rootNode = new OctreeNode(aabb.min, aabb.max);
+  rootNode = new OctreeNode(aabb);
   for (auto triangle : triangles) {
     rootNode->addTriangle(triangle);
   }

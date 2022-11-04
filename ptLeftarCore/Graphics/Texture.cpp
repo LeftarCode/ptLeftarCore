@@ -3,8 +3,8 @@
 #include "../../external/stbi/stb_image.h"
 
 Color Texture::sample(Vector3f uv) {
-  uv.x = fmod(uv.x, 1.0);
-  uv.y = fmod(uv.y, 1.0);
+  uv.x = fmodf(uv.x, 1.0);
+  uv.y = fmodf(uv.y, 1.0);
 
   if (uv.x < 0.0) {
     uv.x += 1.0f;
