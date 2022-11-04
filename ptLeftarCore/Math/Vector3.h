@@ -129,4 +129,13 @@ public:
       return p;
     }
   }
+
+  static Vector3f randomInHemisphere(const Vector3f& vec) {
+    Vector3f unitSphere = randomUnitSphere();
+    if (unitSphere.dotProduct(vec) > 0.0) {
+      return unitSphere;
+    } else {
+      return Vector3f(unitSphere.x, unitSphere.y, unitSphere.z);
+    }
+  }
 };

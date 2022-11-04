@@ -14,19 +14,20 @@
 #include <random>
 
 const int ThreadsCount = 16;
-Color *data = nullptr;
+ImageColor *data = nullptr;
 std::vector<Material> materials;
 std::vector<Triangle> triangles;
 std::vector<Sphere> spheres;
 
 Color secondaryRay(Ray &ray, Octree &octree, int depth) {
   if (depth <= 0) {
-    return Color{0, 0, 0};
+    return Color{1, 1, 1};
   }
 
   Primitive::HitDescriptor hit;
   if (octree.hit(ray, hit)) {
-    Vector3f target = hit.position + hit.normal + Vector3f::randomUnitSphere();
+    Vector3f target =
+        hit.position + hit.normal + Vector3f::randomInHemisphere(hit.normal);
     Vector3f newPostion = hit.position;
     Vector3f newDirection = target - hit.position;
     newDirection.normalize();
@@ -39,33 +40,16 @@ Color secondaryRay(Ray &ray, Octree &octree, int depth) {
                  1.0f / newRay.direction.z);
     newRay.invDirection.normalize();
 
-    Vector3f lightDirection = Vector3f(0.0f, -1.0f, 0.0f);
+    Vector3f lightDirection = Vector3f(0.0f, -1.0f, -1.0f);
     lightDirection.normalize();
-    float intense = lightDirection.dotProduct(hit.normal);
-    if (intense < 0) {
-      intense = 0;
-    } else if (intense > 1) {
-      intense = 1;
-    }
 
-    if (hit.primitive->getType() == eSphere) {
-      std::cout << "SPHERE" << std::endl;
-    }
-
-    Color color = secondaryRay(newRay, octree, depth - 1);
     Material currMat = materials[hit.materialId];
     Color diffuseColor = currMat.diffuseColor;
     if (currMat.diffuseTexture != nullptr) {
       diffuseColor = currMat.diffuseTexture->sample(hit.uv);
     }
-    diffuseColor.r *= intense;
-    diffuseColor.g *= intense;
-    diffuseColor.b *= intense;
 
-    float blendingFactor = 0.5f;
-    Color finalColor = blendColor(color, diffuseColor, blendingFactor);
-
-    return finalColor;
+    return diffuseColor * secondaryRay(newRay, octree, depth - 1);
   }
 
   return Color{0, 0, 0};
@@ -78,21 +62,25 @@ void render(int width, int height, Camera& camera, Octree& octree, int workerID)
     for (int j = 0; j < height; j++) {
       Ray r = camera.castRay(i, j);
 
-      for (int sample = 0; sample < 1; sample++) {
-        Color color = data[j * width + i];
-        Color result = secondaryRay(r, octree, 1);
-
-        data[j * width + i] = blendColor(color, result, 0.5);
+      Color result{0, 0, 0}; 
+      for (int sample = 0; sample < 64; sample++) {
+        result += secondaryRay(r, octree, 4);
       }
+      result /= 64;
+      ImageColor color;
+      color.r = result.r * 255;
+      color.g = result.g * 255;
+      color.b = result.b * 255;
+      data[j * width + i] = color;
     }
   }
 }
 
 int main() {
-  int width = 640;
-  int height = 640;
-  data = (Color *)malloc(sizeof(Color) * width * height);
-  memset(data, 0, sizeof(Color) * width * height);
+  int width = 160;
+  int height = 160;
+  data = (ImageColor *)malloc(sizeof(ImageColor) * width * height);
+  memset(data, 0, sizeof(ImageColor) * width * height);
 
   AABB modelAABB(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   objl::Loader Loader;
@@ -115,9 +103,9 @@ int main() {
     }
 
     Material material;
-    material.diffuseColor.r = curMesh.MeshMaterial.Kd.X * 255;
-    material.diffuseColor.g = curMesh.MeshMaterial.Kd.Y * 255;
-    material.diffuseColor.b = curMesh.MeshMaterial.Kd.Z * 255;
+    material.diffuseColor.r = curMesh.MeshMaterial.Kd.X;
+    material.diffuseColor.g = curMesh.MeshMaterial.Kd.Y;
+    material.diffuseColor.b = curMesh.MeshMaterial.Kd.Z;
     if (curMesh.MeshMaterial.map_Kd.length() > 0) {
       Texture *diffuse = new Texture();
       diffuse->loadFromFile("crytek-sponza-huge-vray-obj\\" + curMesh.MeshMaterial.map_Kd);
@@ -139,12 +127,14 @@ int main() {
   }
 
   Material white;
-  white.diffuseColor = Color{255, 255, 255};
+  white.diffuseColor = Color{1, 1, 1};
+  white.isEmissive = true;
+  white.emissiveColor = Color{1, 1, 1};
   white.diffuseTexture = nullptr;
   materials.push_back(white);
 
-  Sphere sphere(modelAABB.center + Vector3f(-50, -300, 0), 10, materials.size() - 1);
-  spheres.push_back(sphere);
+  Sphere sphere(modelAABB.center + Vector3f(-230, -400, 0), 50, materials.size() - 1);
+  //spheres.push_back(sphere);
 
   Octree octree(triangles, spheres);
   Camera camera(modelAABB.center + Vector3f(0,-300,0), width, height,

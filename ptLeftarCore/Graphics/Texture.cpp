@@ -18,14 +18,21 @@ Color Texture::sample(Vector3f uv) {
   int coordY = uv.y * (height - 1);
 
   if (data != nullptr) {
-    return (Color)data[coordY * width + coordX];
+    ImageColor color = data[coordY * width + coordX];
+    Color out;
+    out.r = color.r / 255.0f;
+    out.g = color.g / 255.0f;
+    out.b = color.b / 255.0f;
+
+    return out;
   }
 
   return Color{0, 0, 0};
 }
 
 void Texture::loadFromFile(std::string filename) {
-    data = (Color *)stbi_load(filename.c_str(), &width, &height, &comp, STBI_rgb);
+  data = (ImageColor *)stbi_load(filename.c_str(), &width, &height, &comp,
+                                 STBI_rgb);
 }
 
 Texture::~Texture() { 

@@ -4,7 +4,7 @@
 #include <string>
 
 class Texture {
-  Color *data;
+  ImageColor *data;
   int width, height, comp;
 
 public:
