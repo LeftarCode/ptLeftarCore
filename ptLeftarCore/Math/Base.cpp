@@ -28,3 +28,7 @@ float randomFloat(float min, float max) {
   static std::mt19937 generator;
   return distribution(generator);
 }
+
+float clamp(float value, float min, float max) {
+  return value < min ? min : (value > max ? max : value);
+}

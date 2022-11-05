@@ -2,8 +2,8 @@
 #include <array>
 
 #include "../../Math/Base.h"
+#include "../../Math/BoundingBox.h"
 #include "../../Math/Ray.h"
-#include "../BoundingBox.h"
 #include "../Color.h"
 #include "../Vertex.h"
 #include "Primitive.h"

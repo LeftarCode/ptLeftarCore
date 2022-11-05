@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 
-#include "../Graphics/Primitives/Sphere.h"
-#include "../Graphics/Primitives/Triangle.h"
+#include "../../Graphics/Primitives/Sphere.h"
+#include "../../Graphics/Primitives/Triangle.h"
 
 class OctreeNode {
   std::vector<OctreeNode*> children;

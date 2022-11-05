@@ -8,11 +8,13 @@
 #include "../external/stbi/stb_image_write.h"
 #include "Graphics/Color.h"
 #include "Graphics/Material.h"
-#include "Graphics/Octree.h"
 #include "Graphics/Primitives/Sphere.h"
 #include "Graphics/Primitives/Triangle.h"
+#include "Graphics/Spectrum/RGBSpectrum.h"
+#include "Graphics/Spectrum/SampledSpectrum.h"
 #include "Math/Camera.h"
 #include "Math/Ray.h"
+#include "Optimizers/Octree/Octree.h"
 
 const int ThreadsCount = 16;
 ImageColor* data = nullptr;
@@ -133,6 +135,10 @@ int main() {
       triangles.push_back(triangle);
     }
   }
+
+  SampledSpectrum::init();
+  SampledSpectrum spectrum;
+  RGBSpectrum rgbSpec;
 
   Material white;
   white.diffuseColor = Color{1, 1, 1};
