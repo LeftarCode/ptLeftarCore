@@ -36,8 +36,10 @@ void render(int width,
       Color result{0, 0, 0};
       Primitive::HitDescriptor hit;
       if (octree.hit(r, hit)) {
-        Material currMat = materials[hit.materialId];
-        result = currMat.diffuseColor;
+        Vector3f normal = hit.normal;
+        result.r = (normal.x + 1) / 2;
+        result.g = (normal.y + 1) / 2;
+        result.b = (normal.z + 1) / 2;
       } else {
         Vector3f unitDirection = r.direction;
         unitDirection.normalize();
@@ -60,17 +62,12 @@ int main() {
   data = (ImageColor*)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
-  Material white;
-  white.diffuseColor = Color{1, 1, 1};
-  white.diffuseTexture = nullptr;
-  materials.push_back(white);
-
   Sphere sphere(Vector3f(0, 0, 0), 50, materials.size() - 1);
   spheres.push_back(sphere);
 
   Octree octree(triangles, spheres);
-  Camera camera(Vector3f(120, 0, 0), width, height, 45.0f);
-  camera.lookAt(camera.origin + Vector3f(-1, 0, 0));
+  Camera camera(Vector3f(-120, 0, 0), width, height, 45.0f);
+  camera.lookAt(camera.origin + Vector3f(1, 0, 0));
 
   std::vector<std::thread> threads;
   threads.reserve(ThreadsCount);
