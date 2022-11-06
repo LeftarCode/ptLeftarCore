@@ -13,6 +13,7 @@
 #include "Graphics/Primitives/Triangle.h"
 #include "Graphics/Spectrum/RGBSpectrum.h"
 #include "Graphics/Spectrum/SampledSpectrum.h"
+#include "Graphics/Techniques/BRDFTechnique.h"
 #include "Math/Camera.h"
 #include "Math/Ray.h"
 #include "Optimizers/Octree/Octree.h"
@@ -24,6 +25,8 @@ std::vector<Triangle> triangles;
 std::vector<Sphere> spheres;
 std::vector<Plane> planes;
 
+BRDFTechnique brdf;
+
 Color secondaryRay(Ray& ray, Octree& octree, int depth) {
   if (depth <= 0) {
     return Color(0, 0, 0);
@@ -33,15 +36,21 @@ Color secondaryRay(Ray& ray, Octree& octree, int depth) {
   if (octree.hit(ray, hit)) {
     Color result{1, 1, 1};
 
-    if (hit.materialId > -1) {
-      result = Color{1, 0, 0};
-    }
-
-    Vector3f newOrigin = hit.position;
-    Vector3f newDirection = hit.normal;
     Ray newRay;
     newRay.origin = hit.position;
     newRay.direction = hit.normal + Vector3f::randomInHemisphere(hit.normal);
+    if (hit.materialId >= 0) {
+      Material mat = materials[hit.materialId];
+      result = mat.diffuseColor;
+
+      if (mat.type == eReflective) {
+        brdf.scatter(hit, ray.direction, newRay.direction);
+        newRay.direction =
+            newRay.direction +
+            Vector3f::randomInHemisphere(hit.normal) * mat.roughness;
+      }
+    }
+
     newRay.direction.normalize();
     newRay.invDirection =
         Vector3f(1.0f / newRay.direction.x, 1.0f / newRay.direction.y,
@@ -68,9 +77,10 @@ void render(int width,
        i < partialWidth * workerID + partialWidth; i++) {
     for (int j = 0; j < height; j++) {
       Ray ray = camera.castRay(i, j);
+
       Color result = {0, 0, 0};
       for (int i = 0; i < 512; i++) {
-        result += secondaryRay(ray, octree, 4);
+        result += secondaryRay(ray, octree, 12);
       }
       result /= 512;
 
@@ -89,25 +99,36 @@ int main() {
   data = (ImageColor*)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
-  Sphere sphere(Vector3f(0, 0, -4), 3, materials.size() - 1);
+  Sphere sphere(Vector3f(0, -1, -4), 3, materials.size() - 1);
   spheres.push_back(sphere);
 
-  Sphere sphere1(Vector3f(0, 0, 3), 3, materials.size() - 1);
+  Material reflectiveSphere;
+  reflectiveSphere.diffuseColor = Color{0, 1, 0};
+  reflectiveSphere.type = eReflective;
+  reflectiveSphere.roughness = 0.5;
+  materials.push_back(reflectiveSphere);
+  Sphere sphere1(Vector3f(0, -1, 3), 3, materials.size() - 1);
   spheres.push_back(sphere1);
 
   Material lightMat;
-  lightMat.diffuseColor = Color{1, 1, 1};
+  lightMat.diffuseColor = Color{1, 0, 0};
+  lightMat.type = eReflective;
+  lightMat.roughness = 0.0f;
   materials.push_back(lightMat);
-
-  Sphere light(Vector3f(0, 4, 4), 4, materials.size() - 1);
+  Sphere light(Vector3f(0, 8, 4), 4, materials.size() - 1);
   spheres.push_back(light);
 
-  Plane plane(Vector3f(0, -4, 0), Vector3f(0, 1, 0), -1);
+  Material reflectivePlane;
+  reflectivePlane.diffuseColor = Color{1, 1, 1};
+  reflectivePlane.type = eReflective;
+  reflectivePlane.roughness = 0.02;
+  materials.push_back(reflectivePlane);
+  Plane plane(Vector3f(0, -4, 0), Vector3f(0, 1, 0), materials.size() - 1);
   planes.push_back(plane);
 
   Octree octree(triangles, spheres, planes);
-  Camera camera(Vector3f(-10, 2, 0), width, height, 45.0f);
-  camera.lookAt(camera.origin + Vector3f(1, -0.1, 0));
+  Camera camera(Vector3f(-12, 1, 0), width, height, 45.0f);
+  camera.lookAt(camera.origin + Vector3f(1, 0, 0));
 
   std::vector<std::thread> threads;
   threads.reserve(ThreadsCount);
