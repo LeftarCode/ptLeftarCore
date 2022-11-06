@@ -2,7 +2,9 @@
 
 #include <limits>
 
-Octree::Octree(std::vector<Triangle>& triangles, std::vector<Sphere>& spheres) {
+Octree::Octree(std::vector<Triangle>& triangles,
+               std::vector<Sphere>& spheres,
+               std::vector<Plane>& planes) {
   BoundingBox aabb = BoundingBox();
   for (auto triangle : triangles) {
     aabb.extend(triangle.v1.position);
@@ -21,6 +23,9 @@ Octree::Octree(std::vector<Triangle>& triangles, std::vector<Sphere>& spheres) {
   }
   for (auto sphere : spheres) {
     rootNode->addSphere(sphere);
+  }
+  for (auto plane : planes) {
+    rootNode->addPlane(plane);
   }
   rootNode->subdivide();
 }

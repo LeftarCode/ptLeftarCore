@@ -96,6 +96,10 @@ void OctreeNode::addSphere(Sphere sphere) {
   spheres.push_back(sphere);
 }
 
+void OctreeNode::addPlane(Plane plane) {
+  planes.push_back(plane);
+}
+
 void OctreeNode::subdivide() {
   if (triangles.size() < 16) {
     generatePackedTriangles();
@@ -190,6 +194,23 @@ bool OctreeNode::hit(Ray ray, Primitive::HitDescriptor& hitDescriptor) const {
     Primitive::HitDescriptor tempHit;
     float intersectionDistance;
     if (!sphere.hit(ray, tempHit)) {
+      continue;
+    }
+
+    intersectionDistance = ray.origin.distance(tempHit.position);
+    if (nearestHit.primitive != nullptr &&
+        intersectionDistance > nearestDistance) {
+      continue;
+    }
+
+    nearestHit = tempHit;
+    nearestDistance = intersectionDistance;
+  }
+
+  for (auto plane : planes) {
+    Primitive::HitDescriptor tempHit;
+    float intersectionDistance;
+    if (!plane.hit(ray, tempHit)) {
       continue;
     }
 

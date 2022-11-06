@@ -3,7 +3,7 @@
 #include "../../Math/Ray.h"
 #include "../Color.h"
 
-enum PrimitiveType { eTriangle, eSphere };
+enum PrimitiveType { eTriangle, eSphere, ePlane };
 
 class Primitive {
  public:

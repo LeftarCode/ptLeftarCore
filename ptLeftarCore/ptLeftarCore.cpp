@@ -8,6 +8,7 @@
 #include "../external/stbi/stb_image_write.h"
 #include "Graphics/Color.h"
 #include "Graphics/Material.h"
+#include "Graphics/Primitives/Plane.h"
 #include "Graphics/Primitives/Sphere.h"
 #include "Graphics/Primitives/Triangle.h"
 #include "Graphics/Spectrum/RGBSpectrum.h"
@@ -21,6 +22,41 @@ ImageColor* data = nullptr;
 std::vector<Material> materials;
 std::vector<Triangle> triangles;
 std::vector<Sphere> spheres;
+std::vector<Plane> planes;
+
+Color secondaryRay(Ray& ray, Octree& octree, int depth) {
+  if (depth <= 0) {
+    return Color(0, 0, 0);
+  }
+
+  Primitive::HitDescriptor hit;
+  if (octree.hit(ray, hit)) {
+    Color result{1, 1, 1};
+
+    if (hit.materialId > -1) {
+      result = Color{1, 0, 0};
+    }
+
+    Vector3f newOrigin = hit.position;
+    Vector3f newDirection = hit.normal;
+    Ray newRay;
+    newRay.origin = hit.position;
+    newRay.direction = hit.normal + Vector3f::randomInHemisphere(hit.normal);
+    newRay.direction.normalize();
+    newRay.invDirection =
+        Vector3f(1.0f / newRay.direction.x, 1.0f / newRay.direction.y,
+                 1.0f / newRay.direction.z);
+    newRay.invDirection.normalize();
+
+    result *= secondaryRay(newRay, octree, depth - 1) * 0.5;
+    return result;
+  }
+
+  Vector3f unitDirection = ray.direction;
+  unitDirection.normalize();
+  float t = 0.5 * (unitDirection.y + 1.0);
+  return Color(1, 1, 1) * (1.0 - t) + Color(0.5, 0.7, 1.0) * t;
+}
 
 void render(int width,
             int height,
@@ -31,21 +67,12 @@ void render(int width,
   for (int i = partialWidth * workerID;
        i < partialWidth * workerID + partialWidth; i++) {
     for (int j = 0; j < height; j++) {
-      Ray r = camera.castRay(i, j);
-
-      Color result{0, 0, 0};
-      Primitive::HitDescriptor hit;
-      if (octree.hit(r, hit)) {
-        Vector3f normal = hit.normal;
-        result.r = (normal.x + 1) / 2;
-        result.g = (normal.y + 1) / 2;
-        result.b = (normal.z + 1) / 2;
-      } else {
-        Vector3f unitDirection = r.direction;
-        unitDirection.normalize();
-        float t = 0.5 * (unitDirection.y + 1.0);
-        result = Color(0, 0, 0) * (1.0 - t) + Color(0.5, 0.7, 1.0) * t;
+      Ray ray = camera.castRay(i, j);
+      Color result = {0, 0, 0};
+      for (int i = 0; i < 512; i++) {
+        result += secondaryRay(ray, octree, 4);
       }
+      result /= 512;
 
       ImageColor color;
       color.r = result.r * 255;
@@ -62,12 +89,25 @@ int main() {
   data = (ImageColor*)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
-  Sphere sphere(Vector3f(0, 0, 0), 50, materials.size() - 1);
+  Sphere sphere(Vector3f(0, 0, -4), 3, materials.size() - 1);
   spheres.push_back(sphere);
 
-  Octree octree(triangles, spheres);
-  Camera camera(Vector3f(-120, 0, 0), width, height, 45.0f);
-  camera.lookAt(camera.origin + Vector3f(1, 0, 0));
+  Sphere sphere1(Vector3f(0, 0, 3), 3, materials.size() - 1);
+  spheres.push_back(sphere1);
+
+  Material lightMat;
+  lightMat.diffuseColor = Color{1, 1, 1};
+  materials.push_back(lightMat);
+
+  Sphere light(Vector3f(0, 4, 4), 4, materials.size() - 1);
+  spheres.push_back(light);
+
+  Plane plane(Vector3f(0, -4, 0), Vector3f(0, 1, 0), -1);
+  planes.push_back(plane);
+
+  Octree octree(triangles, spheres, planes);
+  Camera camera(Vector3f(-10, 2, 0), width, height, 45.0f);
+  camera.lookAt(camera.origin + Vector3f(1, -0.1, 0));
 
   std::vector<std::thread> threads;
   threads.reserve(ThreadsCount);

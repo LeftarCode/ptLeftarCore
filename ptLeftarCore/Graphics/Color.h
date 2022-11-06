@@ -81,4 +81,10 @@ class Color {
     g /= c.g;
     b /= c.b;
   }
+
+  void operator*=(Color c) {
+    r *= c.r;
+    g *= c.g;
+    b *= c.b;
+  }
 };
