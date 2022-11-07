@@ -1,3 +1,6 @@
 [submodule "ptLeftarCore/Externals/openexr"]
 	path = ptLeftarCore/Externals/openexr
 	url = https://github.com/AcademySoftwareFoundation/openexr
+[submodule "ptLeftarCore/Externals/stb"]
+	path = ptLeftarCore/Externals/stb
+	url = https://github.com/nothings/stb.git
