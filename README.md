@@ -1,6 +1,6 @@
 # Path Tracer - ptLeftarCore
 Yet another Path Tracer based on Physically Based Rendering.
-![spheres1_render](scenes/spheres1/render.png)
+![spheres1_render](/scenes/spheres1/render.png)
 
 ## Current timings:
 - Sponza loading time - 1:02
