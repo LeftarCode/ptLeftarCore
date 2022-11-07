@@ -1,5 +1,6 @@
 # Path Tracer - ptLeftarCore
 Yet another Path Tracer based on Physically Based Rendering.
+
 ![spheres1_render](/scenes/spheres1/thumbnail.png)
 
 ## Current timings:
