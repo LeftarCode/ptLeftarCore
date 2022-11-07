@@ -4,8 +4,6 @@
 #include <random>
 #include <thread>
 
-#include "../external/objloader.h"
-#include "../external/stbi/stb_image_write.h"
 #include "Graphics/Color.h"
 #include "Graphics/Material.h"
 #include "Graphics/Primitives/Plane.h"
@@ -17,6 +15,8 @@
 #include "Math/Camera.h"
 #include "Math/Ray.h"
 #include "Optimizers/Octree/Octree.h"
+#include "Externals/objloader.h"
+#include "Externals/stbi/stb_image_write.h"
 
 const int ThreadsCount = 16;
 ImageColor* data = nullptr;
@@ -121,7 +121,7 @@ int main() {
   Material reflectivePlane;
   reflectivePlane.diffuseColor = Color{1, 1, 1};
   reflectivePlane.type = eReflective;
-  reflectivePlane.roughness = 0.02;
+  reflectivePlane.roughness = 0.7;
   materials.push_back(reflectivePlane);
   Plane plane(Vector3f(0, -4, 0), Vector3f(0, 1, 0), materials.size() - 1);
   planes.push_back(plane);

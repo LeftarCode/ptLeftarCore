@@ -1,6 +1,0 @@
-[submodule "ptLeftarCore/Externals/openexr"]
-	path = ptLeftarCore/Externals/openexr
-	url = https://github.com/AcademySoftwareFoundation/openexr.git
-[submodule "ptLeftarCore/Externals/zlib"]
-	path = ptLeftarCore/Externals/zlib
-	url = https://github.com/madler/zlib.git
