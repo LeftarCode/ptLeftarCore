@@ -22,6 +22,7 @@
             "name": "Release x64",
             "type": "cppvsdbg",
             "request": "launch",
+            "preLaunchTask": "generate-and-build-project-release",
             "cwd": "${workspaceRoot}",
             "program": "${workspaceRoot}/out/ptLeftarCore/Release/ptLeftarCore.exe",
             "console": "externalTerminal",

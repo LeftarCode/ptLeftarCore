@@ -95,7 +95,7 @@ void render(int width,
 
 int main() {
   int width = 800;
-  int height = 400;
+  int height = 500;
   data = (ImageColor*)malloc(sizeof(ImageColor) * width * height);
   memset(data, 0, sizeof(ImageColor) * width * height);
 
