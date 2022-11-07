@@ -1,6 +1,6 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "../externals/stbi/stb_image.h"
+#include "../externals/stb/stb_image.h"
 
 Color Texture::sample(Vector3f uv) {
   uv.x = fmodf(uv.x, 1.0);

@@ -16,7 +16,7 @@
 #include "Math/Ray.h"
 #include "Optimizers/Octree/Octree.h"
 #include "Externals/objloader.h"
-#include "Externals/stbi/stb_image_write.h"
+#include "Externals/stb/stb_image_write.h"
 
 const int ThreadsCount = 16;
 ImageColor* data = nullptr;
